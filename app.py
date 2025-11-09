@@ -25,21 +25,30 @@ DATA_DIR = Path(__file__).parent / "data"
 INDEX_PATH = DATA_DIR / "index.json"
 LOGS_PATH = DATA_DIR / "logs.json"
 
-# Load OpenAI client
+# Load OpenAI client with validation
+@st.cache_resource
 def get_openai_client():
+    """Initialize OpenAI client with proper error handling and validation."""
     api_key = st.secrets.get("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
     project_id = st.secrets.get("OPENAI_PROJECT_ID") or os.getenv("OPENAI_PROJECT_ID")
 
-    # Fallback API key for immediate use
     if not api_key:
-        api_key = "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"
+        st.error("⚠️ OPENAI_API_KEY not found in Streamlit Secrets or environment variables.")
+        return None
+    
+    if not api_key.startswith("sk-"):
+        st.warning("⚠️ API key format looks incorrect. Should start with 'sk-'")
+        return None
 
-    if api_key:
-        client_kwargs = {"api_key": api_key, "timeout": 30.0}
+    try:
+        client_kwargs = {"api_key": api_key.strip(), "timeout": 30.0}
         if project_id:
-            client_kwargs["project"] = project_id
+            client_kwargs["project"] = project_id.strip()
+        
         return OpenAI(**client_kwargs)
-    return None
+    except Exception as e:
+        st.error(f"⚠️ Failed to initialize OpenAI client: {str(e)[:100]}")
+        return None
 
 openai_client = get_openai_client()
 
@@ -108,30 +117,59 @@ def build_prompt(message, entries):
         }
     ]
 
-def generate_answer(message, entries):
+def generate_answer(message, entries, retries=2):
+    """Generate answer with retry logic and fallback to FAQ matching."""
+    # Fallback to FAQ matching if no OpenAI client
     if not openai_client:
         best = entries[0]["entry"] if entries else None
         if best:
             return f"{best['answer']}\n\n_Source: {best['title']}_"
         return "I do not have that information yet. Would you like me to connect you with a team member at Female Foundry?"
     
-    try:
-        response = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=build_prompt(message, entries),
-            temperature=0.3
-        )
-        content = response.choices[0].message.content.strip()
-        return content or "I could not formulate a response right now. Would you like me to escalate this to a team member?"
-    except Exception as e:
-        error_msg = str(e)
-        # Don't show full error to user, just log it
-        if "api_key" in error_msg.lower() or "authentication" in error_msg.lower():
-            return "⚠️ API key issue detected. Please check your OpenAI API key in Streamlit Secrets."
-        elif "rate limit" in error_msg.lower():
-            return "⏳ Rate limit reached. Please try again in a moment."
-        else:
-            return f"I ran into a technical issue: {error_msg[:100]}. Please try again or contact support."
+    # Try OpenAI API with retries
+    for attempt in range(retries + 1):
+        try:
+            response = openai_client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=build_prompt(message, entries),
+                temperature=0.3,
+                max_tokens=500
+            )
+            content = response.choices[0].message.content.strip()
+            if content:
+                return content
+            return "I could not formulate a response right now. Would you like me to escalate this to a team member?"
+        except Exception as e:
+            error_msg = str(e).lower()
+            
+            # Don't retry on authentication errors
+            if "api_key" in error_msg or "authentication" in error_msg or "invalid" in error_msg:
+                # Fallback to FAQ if API fails
+                best = entries[0]["entry"] if entries else None
+                if best:
+                    return f"{best['answer']}\n\n_Source: {best['title']}_\n\n_Note: Using FAQ fallback due to API issue._"
+                return "⚠️ API authentication issue. Please check your OpenAI API key in Streamlit Secrets."
+            
+            # Retry on rate limits or network errors
+            elif "rate limit" in error_msg or "timeout" in error_msg:
+                if attempt < retries:
+                    import time
+                    time.sleep(1)  # Wait before retry
+                    continue
+                return "⏳ Rate limit reached. Please try again in a moment."
+            
+            # Last attempt failed - use FAQ fallback
+            if attempt == retries:
+                best = entries[0]["entry"] if entries else None
+                if best:
+                    return f"{best['answer']}\n\n_Source: {best['title']}_\n\n_Note: Using FAQ fallback due to technical issue._"
+                return "I ran into a technical issue. Please try again or contact support."
+    
+    # Should never reach here, but safety fallback
+    best = entries[0]["entry"] if entries else None
+    if best:
+        return f"{best['answer']}\n\n_Source: {best['title']}_"
+    return "I'm having trouble right now. Please try again later."
 
 # UI
 st.title("💬 Female Foundry Chatbot MVP")
