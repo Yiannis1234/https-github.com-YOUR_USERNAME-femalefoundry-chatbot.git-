@@ -28,9 +28,9 @@ LOGS_PATH = DATA_DIR / "logs.json"
 # Load OpenAI client
 def get_openai_client():
     api_key = st.secrets.get("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
+    # Fallback API key for immediate use
     if not api_key:
-        st.error("⚠️ OPENAI_API_KEY not found. Please add it to Streamlit Secrets or environment variables.")
-        return None
+        api_key = "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"
     return OpenAI(api_key=api_key) if api_key else None
 
 openai_client = get_openai_client()
