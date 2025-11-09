@@ -54,16 +54,10 @@ llm-mvp/
 - Source attribution
 - Session state management
 
-## 🔧 Tech Stack
-
-- **Frontend**: Streamlit
-- **LLM**: OpenAI GPT-4o-mini
-- **Data**: JSON files (easily replaceable with Wix Data/DB)
-- **Hosting**: Streamlit Cloud (free)
-
 ## 📝 Notes
 
 - The app uses Streamlit's built-in secrets management for API keys
+- If your key starts with `sk-proj-`, add your project ID as `OPENAI_PROJECT_ID` in secrets
 - Conversation logs are saved to `data/logs.json`
 - FAQ data comes from `data/index.json` (easily replaceable with Wix Data API)
 

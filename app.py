@@ -28,11 +28,17 @@ LOGS_PATH = DATA_DIR / "logs.json"
 # Load OpenAI client
 def get_openai_client():
     api_key = st.secrets.get("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
+    project_id = st.secrets.get("OPENAI_PROJECT_ID") or os.getenv("OPENAI_PROJECT_ID")
+
     # Fallback API key for immediate use
     if not api_key:
         api_key = "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"
+
     if api_key:
-        return OpenAI(api_key=api_key, timeout=30.0)
+        client_kwargs = {"api_key": api_key, "timeout": 30.0}
+        if project_id:
+            client_kwargs["project"] = project_id
+        return OpenAI(**client_kwargs)
     return None
 
 openai_client = get_openai_client()

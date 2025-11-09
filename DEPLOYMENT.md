@@ -34,6 +34,8 @@ git push -u origin main
 3. Add this (replace with your actual API key):
 ```toml
 OPENAI_API_KEY = "your-openai-api-key-here"
+# Optional: only needed if your key starts with sk-proj-
+OPENAI_PROJECT_ID = "proj_your_project_id"
 ```
 4. Click **"Save"**
 5. Your app will automatically redeploy with the API key

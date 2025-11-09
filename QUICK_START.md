@@ -73,6 +73,8 @@ git push -u origin main
 
 ```toml
 OPENAI_API_KEY = "your-openai-api-key-here"
+# Optional: only needed if your key starts with sk-proj-
+OPENAI_PROJECT_ID = "proj_your_project_id"
 ```
 
 4. Click **"Save"**
