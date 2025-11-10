@@ -12,179 +12,93 @@ st.set_page_config(
     page_title="Female Foundry Chatbot",
     page_icon="💬",
     layout="wide",
-    initial_sidebar_state="collapsed"  # Collapse sidebar on mobile
+    initial_sidebar_state="collapsed"
 )
 
-# Custom CSS for mobile chat input visibility
-st.markdown("""
-<style>
-    :root {
-        --ff-gradient: radial-gradient(circle at top, #fdf2ff 0%, #f0f6ff 40%, #f3f4f8 100%);
-        --ff-card: rgba(255, 255, 255, 0.82);
-        --ff-purple: #7b4dff;
-        --ff-magenta: #ff60b2;
-        --ff-navy: #14213d;
-        --ff-gray: #636b7b;
-    }
-
-    body {
-        background: var(--ff-gradient) !important;
-        font-family: "Inter", "SF Pro Display", sans-serif;
-        color: var(--ff-navy);
-    }
-
-    [data-testid="stAppViewContainer"] {
-        background: transparent;
-    }
-
-    [data-testid="stHeader"] {
-        background: transparent;
-        border-bottom: none;
-    }
-
-    .main .block-container {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 2.5rem 2.5rem 7rem !important;
-        background: var(--ff-card);
-        backdrop-filter: blur(20px);
-        border-radius: 28px;
-        box-shadow: 0 30px 70px rgba(93, 108, 143, 0.15);
-    }
-
-    /* Hero card styling */
-    .hero-card {
-        background: linear-gradient(135deg, rgba(123,77,255,0.95), rgba(255,96,178,0.9));
-        color: white;
-        padding: 2.25rem;
-        border-radius: 26px;
-        margin-bottom: 2rem;
-        box-shadow: 0 25px 65px rgba(123,77,255,0.35);
-        position: relative;
-        overflow: hidden;
-    }
-    .hero-card::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at 20% -10%, rgba(255,255,255,0.45), transparent 55%);
-        opacity: 0.9;
-        pointer-events: none;
-    }
-    .hero-card h1 {
-        font-size: clamp(1.8rem, 4vw, 2.6rem);
-        margin-bottom: 0.8rem;
-        letter-spacing: -0.5px;
-    }
-    .hero-card p {
-        font-size: 1rem;
-        max-width: 540px;
-        color: rgba(255,255,255,0.92);
-        margin-bottom: 1.25rem;
-    }
-    .hero-badges {
-        display: flex;
-        gap: 0.75rem;
-        flex-wrap: wrap;
-    }
-    .hero-badges span {
-        background: rgba(255,255,255,0.18);
-        border-radius: 999px;
-        padding: 0.45rem 1.1rem;
-        font-size: 0.85rem;
-        letter-spacing: 0.02em;
-        border: 1px solid rgba(255,255,255,0.28);
-        backdrop-filter: blur(4px);
-    }
-
-    /* Chat message styling */
-    [data-testid="stChatMessage"] {
-        padding: 0.35rem 0 !important;
-    }
-    [data-testid="stChatMessageContent"] {
-        background: rgba(255, 255, 255, 0.76);
-        border-radius: 20px;
-        border: 1px solid rgba(123,77,255,0.08);
-        padding: 1.05rem 1.2rem;
-        box-shadow: 0 18px 36px -20px rgba(27, 32, 48, 0.3);
-    }
-    [data-testid="stChatMessage"] svg {
-        color: var(--ff-purple) !important;
-    }
-    [data-testid="stChatMessage"]:nth-of-type(even) [data-testid="stChatMessageContent"] {
-        background: rgba(123,77,255,0.08);
-        border: 1px solid rgba(123,77,255,0.18);
-    }
-
-    [data-testid="stChatMessageContent"] p,
-    [data-testid="stChatMessageContent"] li {
-        font-size: 1rem;
-        line-height: 1.65;
-        color: var(--ff-navy);
-    }
-
-    /* Chat input styling */
-    .stChatInput {
-        padding: 0 !important;
-    }
-    .stChatInput textarea {
-        border-radius: 18px !important;
-        border: 1px solid rgba(123,77,255,0.18) !important;
-        box-shadow: 0 10px 30px rgb(123 77 255 / 12%) !important;
-        font-size: 1rem !important;
-    }
-
-    /* Ensure chat input is visible on mobile - positioned higher */
-    @media (max-width: 768px) {
+# Lightweight styling for clean layout and mobile fix
+st.markdown(
+    """
+    <style>
+        body {
+            font-family: "Inter", "SF Pro Display", sans-serif;
+            background: radial-gradient(circle at top, #fdf9ff 0%, #f5f7ff 45%, #f3f5f9 100%) !important;
+            color: #172036;
+        }
+        [data-testid="stAppViewContainer"] {
+            background: transparent;
+        }
+        [data-testid="stHeader"] {
+            background: transparent;
+            border-bottom: none;
+        }
         .main .block-container {
-            padding: 1.5rem 1.2rem 7rem !important;
-            border-radius: 0;
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 2rem 2.5rem 6rem !important;
         }
-        .hero-card {
-            margin: 0 -1rem 1.5rem;
-            border-radius: 0 0 26px 26px;
+        .ff-card {
+            background: rgba(255,255,255,0.85);
+            border-radius: 20px;
+            padding: 1.8rem;
+            box-shadow: 0 18px 40px rgba(22,29,43,0.08);
+            border: 1px solid rgba(123,77,255,0.06);
+            margin-bottom: 1.8rem;
         }
-        /* Fix the chat input container */
-        .stChatInputContainer {
-            position: fixed !important;
-            bottom: 20px !important;
-            left: 10px !important;
-            right: 10px !important;
-            z-index: 9999 !important;
-            background: white !important;
-            padding: 10px !important;
-            border-radius: 25px !important;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.15) !important;
-            max-width: calc(100% - 20px) !important;
+        .ff-card h1 {
+            margin-bottom: 0.4rem;
+            font-size: clamp(1.8rem, 4vw, 2.4rem);
+            letter-spacing: -0.03em;
         }
-        
-        /* Ensure the input itself is visible */
-        .stChatInput > div {
-            width: 100% !important;
+        .ff-card p {
+            margin: 0;
+            color: #475067;
         }
-        
-        /* Add padding to main content so messages don't get hidden */
-        .main .block-container, .stApp, [data-testid="stVerticalBlock"] {
-            padding-bottom: 140px !important;
+        [data-testid="stChatMessage"] {
+            padding: 0.35rem 0 !important;
         }
-        
-        /* Hide sidebar on mobile by default */
-        .stSidebar {
-            display: none !important;
+        [data-testid="stChatMessageContent"] {
+            background: rgba(255,255,255,0.92);
+            border-radius: 16px;
+            border: 1px solid rgba(123,77,255,0.07);
+            padding: 0.95rem 1.05rem;
+            box-shadow: 0 16px 34px -22px rgba(18, 21, 40, 0.35);
         }
-    }
-    
-    /* For very small screens (phones in portrait) */
-    @media (max-width: 480px) {
-        .stChatInputContainer {
-            bottom: 10px !important;
-            left: 5px !important;
-            right: 5px !important;
-            max-width: calc(100% - 10px) !important;
+        .stChatInput textarea {
+            border-radius: 18px !important;
+            border: 1px solid rgba(123,77,255,0.18) !important;
+            box-shadow: 0 10px 30px rgb(123 77 255 / 12%) !important;
+            font-size: 1rem !important;
         }
-    }
-</style>
-""", unsafe_allow_html=True)
+        /* Mobile input fix */
+        @media (max-width: 768px) {
+            .main .block-container {
+                padding: 1.5rem 1.2rem 6rem !important;
+            }
+            .stChatInputContainer {
+                position: fixed !important;
+                bottom: 16px !important;
+                left: 12px !important;
+                right: 12px !important;
+                z-index: 9999 !important;
+                background: white !important;
+                padding: 12px !important;
+                border-radius: 18px !important;
+                box-shadow: 0 12px 40px rgba(20,21,36,0.15) !important;
+            }
+            .stChatInput > div {
+                width: 100% !important;
+            }
+            [data-testid="stVerticalBlock"] {
+                padding-bottom: 120px !important;
+            }
+            .stSidebar {
+                display: none;
+            }
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 # Initialize session state
 if "messages" not in st.session_state:
@@ -192,22 +106,11 @@ if "messages" not in st.session_state:
 if "logs" not in st.session_state:
     st.session_state.logs = []
 
-# Hero section
-st.markdown(
-    """
-    <div class="hero-card">
-        <h1>Female Foundry AI Concierge</h1>
-        <p>Your always-on teammate for surfacing the Female Innovation Index, onboarding founders, and routing questions to the right human in seconds.</p>
-        <div class="hero-badges">
-            <span>LLM-guided answers</span>
-            <span>Privacy-aware</span>
-            <span>Rapid handover</span>
-            <span>Analytics ready</span>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+with st.container():
+    st.markdown(
+        '<div class="ff-card"><h1>Female Foundry Chatbot</h1><p>Ask me about the Female Innovation Index, key stats on female-founded startups, or how to get involved with Female Foundry.</p></div>',
+        unsafe_allow_html=True,
+    )
 
 # Paths
 DATA_DIR = Path(__file__).parent / "data"
