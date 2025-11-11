@@ -3,6 +3,8 @@ import json
 import os
 import uuid
 import re
+import csv
+from functools import lru_cache
 from pathlib import Path
 from openai import OpenAI
 from datetime import datetime
@@ -116,6 +118,8 @@ with st.container():
 DATA_DIR = Path(__file__).parent / "data"
 INDEX_PATH = DATA_DIR / "index.json"
 LOGS_PATH = DATA_DIR / "logs.json"
+ORDER_SHEET_LOCAL = DATA_DIR / "dealroom_order_sheet.csv"
+ORDER_SHEET_DOWNLOADS = Path.home() / "Downloads" / "Copy of Female Innovation Index 2025_ Dealroom Data - ORDER SHEET.csv"
 
 # Load OpenAI client with validation
 @st.cache_resource
@@ -149,9 +153,13 @@ openai_client = get_openai_client()
 def load_index():
     try:
         with open(INDEX_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
     except FileNotFoundError:
-        return []
+        data = []
+
+    # Extend with Dealroom order sheet entries if available
+    data.extend(load_dealroom_entries())
+    return data
 
 def load_logs():
     try:
@@ -170,6 +178,87 @@ def save_log(entry):
     except Exception as e:
         # Silently fail - file writing is optional, logs are in session state anyway
         pass
+
+
+@lru_cache()
+def load_dealroom_entries():
+    """Parse the Dealroom order sheet CSV into FAQ-style entries."""
+    entries = []
+    for path in (ORDER_SHEET_LOCAL, ORDER_SHEET_DOWNLOADS):
+        if not path.exists():
+            continue
+        try:
+            with path.open("r", encoding="utf-8-sig") as csv_file:
+                reader = csv.DictReader(csv_file)
+                for row in reader:
+                    entry = format_order_sheet_row(row)
+                    if entry:
+                        entries.append(entry)
+        except Exception as exc:
+            st.warning(f"Could not read Dealroom order sheet ({path.name}): {exc}")
+        else:
+            break  # stop after first successful read
+    return entries
+
+
+def format_order_sheet_row(row: dict):
+    identifier = (row.get("Identifyer") or "").strip()
+    description = (row.get("Description (FF)") or "").strip()
+
+    if not identifier and not description:
+        return None
+
+    def clean(value: str):
+        if not value:
+            return None
+        return value.replace("\r\n", "\n").replace("\r", "\n").strip()
+
+    info_lines = []
+    field_mapping = [
+        ("Identifier", "Identifyer"),
+        ("Section", "Section"),
+        ("Status", "Status"),
+        ("Female Foundry brief", "Description (FF)"),
+        ("Dealroom description", "Description (DR)"),
+        ("Expected output", "How the output looks like"),
+        ("Dealroom query", "DR Query"),
+        ("Link to Dealroom data", "Link o DR data"),
+        ("Embed code", "Embed Code"),
+        ("FF question", "Comment / Question to FF"),
+        ("FF answer (Dec 2024)", "Answer FF (12.2024)"),
+        ("Dealroom comment", "Comment DR (first export)"),
+        ("FF answer (Jan 2025)", "Answer FF 20.01.2025"),
+    ]
+
+    for label, column in field_mapping:
+        value = clean(row.get(column))
+        if value:
+            info_lines.append(f"{label}: {value}")
+
+    if not info_lines:
+        return None
+
+    tags = ["dealroom"]
+    section = clean(row.get("Section"))
+    status = clean(row.get("Status"))
+    if section:
+        tags.extend([token for token in re.split(r"[+/,\s]+", section.lower()) if token])
+    if status:
+        tags.extend([token for token in re.split(r"[+/,\s]+", status.lower()) if token])
+
+    title = description or identifier or "Dealroom data insight"
+    question = f"What does the Dealroom order sheet cover for '{title}'?"
+
+    entry_id = identifier.lower().replace(" ", "_") if identifier else f"dealroom_{abs(hash(title))}"
+
+    return {
+        "id": entry_id,
+        "title": title,
+        "question": question,
+        "answer": "\n".join(info_lines),
+        "tags": tags,
+    }
+
 
 # Scoring function
 def score_entry(entry, message):
