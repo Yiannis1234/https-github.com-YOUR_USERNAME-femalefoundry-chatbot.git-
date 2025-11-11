@@ -113,11 +113,13 @@ if not st.session_state.messages:
         {
             "role": "assistant",
             "content": (
-                "Hi! I can answer questions using the Female Innovation Index and the Dealroom order sheet.\n\n"
+                "Hi! I can answer questions using the Female Innovation Index survey, macro analysis, and the Dealroom order sheet.\n\n"
                 "**Try asking about:**\n"
                 "• VC raised by female-founded startups (2020–2024)\n"
                 "• Top sectors for new female-founded companies in 2024\n"
                 "• Deep tech or AI sub-sectors and their funding volumes\n"
+                "• Survey findings on fundraising difficulty or innovation barriers\n"
+                "• Inflation, interest rates, or IPO counts by country (2019–2024)\n"
                 "• Month-by-month VC investment in Europe for 2024\n"
                 "• Country-level breakdowns of funding or deal counts\n\n"
                 "Just describe the metric or Dealroom identifier you need—for example, \"Show DR_FF_C_1\" or "
