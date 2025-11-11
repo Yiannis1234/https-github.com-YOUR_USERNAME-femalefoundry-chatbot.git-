@@ -26,6 +26,34 @@
     "question": "What if the chatbot cannot answer my question?",
     "answer": "If the chatbot cannot assist, it will offer to escalate your request to the Female Foundry support inbox. You will receive a human response within one business day.",
     "tags": ["support", "escalation"]
+  },
+  {
+    "id": "survey_fundraising_2024",
+    "title": "Survey results: fundraising difficulty in 2024",
+    "question": "What did founders report about fundraising difficulty in 2024?",
+    "answer": "Female Foundry’s 2024 survey asked 682 early-stage founders and 83 growth-stage founders how the fundraising climate changed versus the prior year.\n\nEarly-stage responses (n = 682):\n• Significantly harder – 83 founders (12%)\n• Harder – 170 (25%)\n• No change – 223 (33%)\n• Easier – 34 (5%)\n• Significantly easier – 12 (2%)\n• I don’t know – 160 (24%)\n\nGrowth-stage responses (n = 83):\n• Significantly harder – 10 founders (12%)\n• Harder – 16 (19%)\n• No change – 38 (46%)\n• Easier – 5 (6%)\n• Significantly easier – 0 (0%)\n• I don’t know – 14 (17%)\n\nIn short, most growth founders reported “no change,” while early-stage founders were more evenly split between harder, unchanged, and unsure.",
+    "tags": ["survey", "fundraising", "2024"]
+  },
+  {
+    "id": "survey_inhibitors_2024",
+    "title": "Survey results: inhibitors of innovation by sector (2024)",
+    "question": "What are the biggest inhibitors of innovation for female-founded companies by sector?",
+    "answer": "Respondents highlighted different bottlenecks per sector (counts show number of mentions in the 2024 Female Foundry survey):\n\n• Sustainability (n=89): top blockers were access to funding (46 mentions, 10%), slow adoption of technology (38, 11%), regulatory barriers (24, 12%), and cultural norms (19, 11%).\n• Fintech (n=91): access to funding (45, 10%) dominated, followed by slow adoption of technology (45, 13%) and economic uncertainty (17, 9%).\n• Deeptech (n=59): access to funding (30, 6%), slow adoption (24, 7%), and talent shortage (6, 7%) were the most-cited issues.\n• Health (n=167): access to funding (101, 21%), economic uncertainty (49, 27%), slow adoption (59, 17%), and cultural norms (36, 20%).\n• Data & AI (n=136): access to funding (67, 14%), economic uncertainty (24, 13%), slow adoption (47, 14%), and cultural norms (29, 16%).\n• Mobility (n=63): access to funding (29, 7%) and regulatory barriers (11, 6%) led.\n• Education (n=52): access to funding (28, 6%), slow adoption (27, 8%), and regulatory barriers (16, 8%).\n• E-commerce (n=49): economic uncertainty (12, 7%) and access to funding (18, 4%) were highest.\n• Marketing, Cyber Security, Food, Entertainment, and “Other” sectors show similar patterns—access to funding is the single most common inhibitor overall (470 mentions across all sectors), followed by slow adoption of technology (340) and economic uncertainty (184).",
+    "tags": ["survey", "innovation", "barriers", "2024"]
+  },
+  {
+    "id": "macro_inflation_interest_2020_2024",
+    "title": "Macroeconomic context: inflation and interest rates (2020-2024)",
+    "question": "What does the Innovation Index report about inflation and interest rates in Europe between 2020 and 2024?",
+    "answer": "Female Foundry’s macro analysis combines OECD and central bank data for key markets:\n\nYear-on-year inflation (%):\n• UK – 1.0 (2020), 2.5 (2021), 7.9 (2022), 8.6 (2023), 3.3 (2024)\n• Germany – 0.4, 3.2, 8.7, 6.0, 2.5\n• Poland – 3.7, 5.2, 13.2, 10.9, 3.7\n• EU (aggregate) – 0.7, 2.9, 9.2, 6.4, 2.6\n\nPolicy-relevant central bank interest rates (%):\n• UK (Bank of England) – 0.10 (2020), 0.10 (2021), 3.50 (2022), 5.25 (2023), 4.75 (2024)\n• Germany / Eurozone (ECB) – 0.00, 0.00, 2.50, 4.50, 3.15\n• Poland (NBP) – 0.10, 1.75, 6.75, 5.75, 5.75\n• EU (aggregate) – 0.00, 0.00, 2.50, 4.25, 3.65\n\nThe commentary notes that UK inflation peaked highest, while Poland faced persistently higher inflation. Central banks tightened rates in 2022–2023 and eased slightly in 2024.",
+    "tags": ["macro", "inflation", "interest rates", "2024"]
+  },
+  {
+    "id": "macro_ipos_2019_2024",
+    "title": "IPO activity 2019-2024",
+    "question": "How many IPOs happened in Europe according to the Female Innovation Index?",
+    "answer": "Dealroom data compiled for the Innovation Index shows IPO counts per year (2019–2024):\n\nUnited Kingdom – 55 (2019), 40 (2020), 57 (2021), 44 (2022), 22 (2023), 26 (2024)\nGermany – 23, 8, 14, 7, 7, 7\nPoland – 19, 23, 63, 21, 11, 12\nEU (all countries combined) – 400, 523, 962, 325, 258, 217\n\nThe commentary highlights the surge in 2021, followed by a pullback in 2022–2023 and modest activity in 2024.",
+    "tags": ["IPOs", "macro", "dealroom", "2019", "2024"]
   }
 ]
 
