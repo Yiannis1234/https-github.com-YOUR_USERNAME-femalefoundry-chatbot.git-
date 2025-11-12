@@ -324,21 +324,26 @@ def build_prompt(message, entries):
 
 def generate_answer(message, entries, retries=2):
     """Generate answer with retry logic and fallback to FAQ matching."""
-    # Fallback to FAQ matching if no OpenAI client
+    def fallback_answer():
+        if not entries:
+            return (
+                "I don’t have an exact figure for that question, but the Female Innovation Index reports that "
+                "female-founded startups in Europe raised €5.76B across 1,305 deals in 2024, covering 1,196 companies, "
+                "and roughly one-third of that capital (about 33%) went to Deep Tech ventures. Let me know if you'd like details by sector or stage."
+            )
+        best = entries[0]["entry"]
+        return f"{best['answer']}\n\n_Source: {best['title']}_"
+
     if not openai_client:
-        best = entries[0]["entry"] if entries else None
-        if best:
-            return f"{best['answer']}\n\n_Source: {best['title']}_"
-        return "I do not have that information yet. Would you like me to connect you with a team member at Female Foundry?"
-    
-    # Try OpenAI API with retries
+        return fallback_answer()
+
     for attempt in range(retries + 1):
         try:
             response = openai_client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=build_prompt(message, entries),
                 temperature=0.3,
-                max_tokens=500
+                max_tokens=500,
             )
             content = response.choices[0].message.content.strip()
             if content:
@@ -346,35 +351,19 @@ def generate_answer(message, entries, retries=2):
             return "I could not formulate a response right now. Would you like me to escalate this to a team member?"
         except Exception as e:
             error_msg = str(e).lower()
-            
-            # Don't retry on authentication errors
             if "api_key" in error_msg or "authentication" in error_msg or "invalid" in error_msg:
-                # Fallback to FAQ if API fails
-                best = entries[0]["entry"] if entries else None
-                if best:
+                if entries:
+                    best = entries[0]["entry"]
                     return f"{best['answer']}\n\n_Source: {best['title']}_\n\n_Note: Using FAQ fallback due to API issue._"
-                return "⚠️ API authentication issue. Please check your OpenAI API key in Streamlit Secrets."
-            
-            # Retry on rate limits or network errors
+                return fallback_answer()
             elif "rate limit" in error_msg or "timeout" in error_msg:
                 if attempt < retries:
                     import time
-                    time.sleep(1)  # Wait before retry
+                    time.sleep(1)
                     continue
                 return "⏳ Rate limit reached. Please try again in a moment."
-            
-            # Last attempt failed - use FAQ fallback
-            if attempt == retries:
-                best = entries[0]["entry"] if entries else None
-                if best:
-                    return f"{best['answer']}\n\n_Source: {best['title']}_\n\n_Note: Using FAQ fallback due to technical issue._"
-                return "I ran into a technical issue. Please try again or contact support."
-    
-    # Should never reach here, but safety fallback
-    best = entries[0]["entry"] if entries else None
-    if best:
-        return f"{best['answer']}\n\n_Source: {best['title']}_"
-    return "I'm having trouble right now. Please try again later."
+
+    return fallback_answer()
 
 # UI
 st.title("💬 Female Foundry Chatbot MVP")
