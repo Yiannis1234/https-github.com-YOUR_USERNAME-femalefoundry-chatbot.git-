@@ -297,10 +297,11 @@ def find_relevant_entries(message, limit=3):
     scored = [
         {"entry": entry, "score": score_entry(entry, message)}
         for entry in index
+        if entry.get("id") != "faq-004"
     ]
     scored.sort(key=lambda x: x["score"], reverse=True)
     top = [x for x in scored[:limit] if x["score"] > 0]
-    if top and top[0]["score"] < 0.2:
+    if top and top[0]["score"] < 0.25:
         return []
     return top
 
@@ -331,18 +332,21 @@ def build_prompt(message, entries):
 
 def generate_answer(message, entries, retries=2):
     """Generate answer with retry logic and fallback to FAQ matching."""
+
     def fallback_answer():
-        return None
+        return (
+            "I couldn’t find that exact statistic in the Female Innovation Index dataset. "
+            "Here’s the closest context I do have:\n"
+            "• Female-founded startups raised €5.76B across 1,305 deals in Europe during 2024 (1,196 companies, ~12% of total VC).\n"
+            "• Roughly one-third of that capital went into Deep Tech and AI ventures led by women.\n"
+            "• Survey responses highlight access to funding, slow adoption of technology, cultural norms, and economic uncertainty "
+            "as the top hurdles for science-heavy female founders.\n"
+            "If you want a sharper number, you can filter the Dealroom export (e.g., by Deep Tech, Health, Life Sciences) "
+            "or specify a dataset such as DR_FF_C_1, and I’ll drill down."
+        )
 
     if not openai_client:
-        fallback = fallback_answer()
-        if fallback:
-            return fallback
-        return (
-            "I couldn’t find that specific stat in my current context. From the Female Innovation Index 2025, we do know that female-founded "
-            "startups raised €5.76B across 1,305 deals in Europe during 2024 (1,196 companies), with deep tech and AI representing roughly one-third of that capital. "
-            "Let me know if you’d like a different slice (sector, country, or Dealroom dataset) and I’ll look again."
-        )
+        return fallback_answer()
 
     for attempt in range(retries + 1):
         try:
@@ -355,21 +359,11 @@ def generate_answer(message, entries, retries=2):
             content = response.choices[0].message.content.strip()
             if content:
                 return content
-            return (
-                "I couldn’t find that specific number in my current context. However, the Female Innovation Index reports €5.76B raised by female-founded "
-                "startups across 1,305 deals in 2024 (1,196 companies) with deep tech/AI capturing about a third of that amount. "
-                "If you can narrow the question (sector, country, stage, or Dealroom ID), I’ll take another look."
-            )
+            return fallback_answer()
         except Exception as e:
             error_msg = str(e).lower()
             if "api_key" in error_msg or "authentication" in error_msg or "invalid" in error_msg:
-                fallback = fallback_answer()
-                if fallback:
-                    return fallback
-                return (
-                    "I couldn’t locate that stat, but headline figures show €5.76B raised by 1,196 female-founded startups in Europe during 2024 "
-                    "across 1,305 deals, with deep tech/AI taking about a third. Share a more specific angle (e.g. science, country, Dealroom dataset) and I’ll try again."
-                )
+                return fallback_answer()
             elif "rate limit" in error_msg or "timeout" in error_msg:
                 if attempt < retries:
                     import time
@@ -377,13 +371,7 @@ def generate_answer(message, entries, retries=2):
                     continue
                 return "⏳ Rate limit reached. Please try again in a moment."
 
-    fallback = fallback_answer()
-    if fallback:
-        return fallback
-    return (
-        "I couldn’t find that exact metric. To give you some context: female-founded startups in Europe raised €5.76B across 1,305 deals in 2024 "
-        "(1,196 companies), and about one-third of that capital flowed into deep tech and AI. If you have a specific sector, country, or Dealroom dataset in mind, let me know and I’ll try again."
-    )
+    return fallback_answer()
 
 # UI
 st.title("💬 Female Foundry Chatbot MVP")
