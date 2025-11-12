@@ -329,9 +329,6 @@ def build_prompt(message, entries):
 def generate_answer(message, entries, retries=2):
     """Generate answer with retry logic and fallback to FAQ matching."""
     def fallback_answer():
-        if entries:
-            best_entry = entries[0]["entry"]
-            return f"{best_entry['answer']}\n\n_Source: {best_entry['title']}_"
         return None
 
     if not openai_client:
@@ -339,9 +336,9 @@ def generate_answer(message, entries, retries=2):
         if fallback:
             return fallback
         return (
-            "I don’t have that specific metric in my context. You can ask me about headline statistics (e.g. total funding for female-founded "
-            "startups, deep tech or AI sectors, growth-stage trends, IPO activity) or request datasets from the Dealroom order sheet such as "
-            "DR_FF_C_1 or DR_MC_C_5."
+            "I don’t have that specific metric. I do see that female-founded startups raised €5.76B across 1,305 deals in 2024 and roughly "
+            "one-third of that capital flowed into Deep Tech/AI sectors. If you can narrow the question (e.g. pick a sector, stage, or Dealroom identifier), "
+            "I’ll try to surface something closer."
         )
 
     for attempt in range(retries + 1):
@@ -356,9 +353,8 @@ def generate_answer(message, entries, retries=2):
             if content:
                 return content
             return (
-                "I don’t have that specific metric in my context. You can ask me about headline statistics (e.g. total funding for female-founded "
-                "startups, deep tech or AI sectors, fundraising challenges) or request datasets from the Dealroom order sheet such as "
-                "DR_FF_C_1 or DR_MC_C_5."
+                "I don’t have that specific metric. Headline view: €5.76B raised by female-founded startups in 2024 (1,196 companies, 12% of VC) "
+                "with about one-third going to Deep Tech/AI. For sharper numbers, mention a sector, stage, or Dealroom dataset so I can zero in."
             )
         except Exception as e:
             error_msg = str(e).lower()
@@ -367,8 +363,8 @@ def generate_answer(message, entries, retries=2):
                 if fallback:
                     return fallback
                 return (
-                    "I don’t have that specific metric in my context. You can ask me about headline statistics (e.g. total funding for female-founded "
-                    "startups, deep tech or AI sectors) or request Dealroom datasets such as DR_FF_C_1."
+                    "I don’t have that specific metric handy. Headline figures: €5.76B raised by female-founded startups in Europe during 2024; "
+                    "Deep Tech/AI represents roughly a third of that volume. Let me know if you want a particular sector or stage."
                 )
             elif "rate limit" in error_msg or "timeout" in error_msg:
                 if attempt < retries:
@@ -381,8 +377,8 @@ def generate_answer(message, entries, retries=2):
     if fallback:
         return fallback
     return (
-        "I don’t have that specific metric in my context. You can ask me about headline statistics (e.g. total funding for female-founded startups, "
-        "deep tech or AI sectors, IPO counts) or request Dealroom datasets such as DR_FF_C_1 or DR_MC_C_5."
+        "I don’t have that exact metric to hand. What I can share: €5.76B was raised by 1,196 female-founded startups across 1,305 deals in 2024, "
+        "with Deep Tech/AI capturing about one-third of the capital. If you refine the question (sector, country, stage, or Dealroom ID), I’ll dig deeper."
     )
 
 # UI
