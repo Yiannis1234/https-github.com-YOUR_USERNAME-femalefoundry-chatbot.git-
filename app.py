@@ -284,7 +284,11 @@ def format_order_sheet_row(row: dict):
 def score_entry(entry, message):
     tokens = re.sub(r"[^a-z0-9\s]", " ", message.lower()).split()
     tokens = [t for t in tokens if t]
-    haystack = f"{entry['title']} {entry['question']} {entry['answer']} {' '.join(entry['tags'])}".lower()
+    alt_q = " ".join(entry.get("altQuestions", []))
+    haystack = (
+        f"{entry.get('title', '')} {entry.get('question', '')} "
+        f"{entry.get('answer', '')} {' '.join(entry.get('tags', []))} {alt_q}"
+    ).lower()
     hits = sum(1 for token in tokens if token in haystack)
     return hits / max(len(tokens), 1)
 
