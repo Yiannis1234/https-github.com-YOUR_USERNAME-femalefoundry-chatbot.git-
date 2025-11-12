@@ -310,7 +310,11 @@ def build_prompt(message, entries):
     return [
         {
             "role": "system",
-            "content": "You are the Female Foundry assistant. Answer using the provided context. If you cannot find an answer in context, suggest escalating the conversation to a human via email. Respect privacy: never request sensitive personal data."
+            "content": (
+                "You are the Female Foundry assistant. Always use the provided context and give the closest relevant figure or summary, "
+                "even if the exact number is not present. If no relevant facts exist at all, only then suggest contacting a human. "
+                "Respect privacy and never request sensitive personal data."
+            )
         },
         {
             "role": "assistant",
