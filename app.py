@@ -60,7 +60,7 @@ with button_container:
         if st.button("I’m ready"):
             st.session_state["chat_log"].append(("bot", "First things first—what’s your name?"))
             st.session_state["stage"] = "ask_name"
-            st.experimental_rerun()
+            st.rerun()
 
     elif st.session_state["stage"] == "ask_name":
         name = st.text_input("Your name")
@@ -72,7 +72,7 @@ with button_container:
                     ("bot", f"Nice to meet you, {name.strip().title()}! Choose what you’d like to explore:")
                 )
                 st.session_state["stage"] = "menu_primary"
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.warning("Let’s capture your name before we go on.")
 
@@ -88,7 +88,7 @@ with button_container:
                 st.session_state["chat_log"].append(("user", opt))
                 st.session_state["primary_choice"] = opt
                 st.session_state["stage"] = "menu_secondary"
-                st.experimental_rerun()
+                st.rerun()
 
     elif st.session_state["stage"] == "menu_secondary":
         choice = st.session_state.get("primary_choice")
@@ -103,30 +103,52 @@ with button_container:
                 st.session_state["chat_log"].append(("user", opt))
                 st.session_state["sub_choice"] = opt
                 st.session_state["stage"] = "show_info"
-                st.experimental_rerun()
+                st.rerun()
 
     elif st.session_state["stage"] == "show_info":
         info_map = {
             "Headline metrics": KNOWLEDGE.get("headline_female_founders_2024"),
             "Deep Tech & AI": KNOWLEDGE.get("science_stem_female_founders"),
-            "Using the Index": "Use the Index’s funnel metrics plus Dealroom exports (DR_FF_C_1, DR_MC_C_5) to build investment memos and monitor trends.",
-            "AI Visionaries": "Female Foundry’s AI incubator with Google Cloud features cohort support, mentors, and GTM help. CTA: Visit AI Visionaries on the homepage.",
-            "AI Hustle": "Monthly 1-hour clinics with Agata Nowicka for three founders. CTA: Sign up via the homepage.",
-            "Sunday Newsletter": "Weekly digest covering venture news & female founder tips. CTA: Read / subscribe from the homepage.",
-            "Join the community": "Join 7,000+ founders/investors via the community CTA to unlock intros, resources, and events.",
-            "Campaigns": "Watch the ‘Celebrating female founders’ stories to feature founders in your media or decks.",
-            "Shop": "The Female Foundry Shop offers identity assets and merchandise—ideal for events or partner gifts.",
+            "Using the Index": (
+                "Use the Index’s funnel metrics plus Dealroom exports (DR_FF_C_1 for VC into female-founded companies, "
+                "DR_MC_C_5 for monthly totals) to build investment memos and monitor trends. "
+                "The homepage’s ‘Female Innovation Index’ section links straight to the 2025 edition."
+            ),
+            "AI Visionaries": (
+                "Female Foundry’s AI incubator with Google Cloud supports founders experimenting with frontier AI. "
+                "Click “Visit AI Visionaries” on the hero section to view cohorts, mentors, and application timing."
+            ),
+            "AI Hustle": (
+                "AI Hustle is a free monthly 1-hour clinic with Agata Nowicka (up to three founders per session). "
+                "Hit “Sign Up” in the AI Hustle panel to request a slot."
+            ),
+            "Sunday Newsletter": (
+                "Stay informed with the Sunday Newsletter—venture news, fundraising tips, ecosystem insights. "
+                "Select “Read” in the newsletter section to subscribe."
+            ),
+            "Join the community": (
+                "Join the 7,000+ strong community of founders, investors, and operators via the “Join the Community” button. "
+                "It unlocks intros, resources, and access to Female Foundry programs."
+            ),
+            "Campaigns": (
+                "Scroll to “Celebrating female founders” and tap “Watch all” to see storytelling campaigns filmed from a female perspective."
+            ),
+            "Shop": (
+                "The Female Foundry Shop (linked in the footer) offers identity assets and merchandise—ideal for events, partners, or supporter gifts."
+            ),
             "Contact": KNOWLEDGE.get("ff_site_contact"),
             "Partners": KNOWLEDGE.get("ff_site_navigation"),
-            "Media coverage": "As seen in FT Adviser, Maddyness, tech.eu, UKTN, Sifted, Startups Magazine, TFN—use logos in pitch packs." 
+            "Media coverage": (
+                "Female Foundry is featured in FT Adviser, Maddyness, tech.eu, UKTN, Sifted, Startups Magazine, TFN and more. "
+                "Use these logos (shown above the partner grid) in your decks or press materials."
+            )
         }
         answer = info_map.get(st.session_state.get("sub_choice"), "")
         st.session_state["chat_log"].append(("bot", answer))
         st.session_state["chat_log"].append(("bot", "Anything else you'd like to explore?"))
         st.session_state["stage"] = "menu_primary"
-        st.experimental_rerun()
+        st.rerun()
 
     st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="chat-wrapper footer">Powered by Female Foundry • Embed this widget inside Wix via iframe.</div>', unsafe_allow_html=True)
-PY
