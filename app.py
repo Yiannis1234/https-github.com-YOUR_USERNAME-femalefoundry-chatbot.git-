@@ -22,122 +22,124 @@ st.markdown(
             color: #111826;
             font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
         }
+        .stApp > header, .stApp > footer { display: none; }
+        section[data-testid="stSidebar"] { display: none !important; }
         [data-testid="stAppViewContainer"] {
             background: transparent !important;
             padding: 0 !important;
         }
-        .stApp > header, .stApp > footer { display: none; }
-        section[data-testid="stSidebar"] { display: none !important; }
         [data-testid="stAppViewContainer"] > .main {
             background: transparent !important;
             padding: 0 !important;
-            display: flex;
-            justify-content: flex-end;
-            align-items: flex-end;
-            min-height: 100vh;
-        }
-        [data-testid="stVerticalBlock"] {
-            gap: 0 !important;
-        }
-        [data-testid="element-container"] {
-            padding: 0 !important;
-            margin: 0 !important;
-            background: transparent !important;
-        }
-        [data-testid="stAppViewContainer"] > .main > div {
-            width: 100%;
         }
         [data-testid="stAppViewContainer"] .block-container {
-            max-width: 360px !important;
-            width: 360px !important;
-            margin-left: auto !important;
-            margin-right: 28px !important;
-            margin-bottom: 160px !important;
-            margin-top: auto !important;
             padding: 0 !important;
-            background: transparent !important;
+            margin: 0 !important;
         }
-        div[data-testid="stVerticalBlock"], div[data-testid="element-container"] { width: 100%; }
-        .chat-wrapper {
-            width: 100%;
-            background: #ffffff;
-            border-radius: 20px;
-            border: 1px solid #e6e8fb;
-            box-shadow: 0 18px 40px rgba(40, 34, 104, 0.16);
-        }
-        .chat-wrapper.history {
-            border-radius: 20px 20px 0 0;
-            border-bottom: 1px solid #eef0ff;
-            margin-bottom: 0;
-            max-height: 320px;
-            overflow-y: auto;
-            padding: 1.05rem 1.15rem 0.7rem;
+        .chat-shell {
+            position: fixed;
+            right: 32px;
+            bottom: 160px;
+            width: 360px;
+            z-index: 1200;
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0;
         }
-        .chat-wrapper.buttons {
-            border-radius: 0 0 20px 20px;
-            border-top: none;
-            margin-top: -1px;
-            padding: 0.85rem 1.15rem 1.05rem;
+        .chat-card {
             background: #ffffff;
+            border: 1px solid #dfe3fb;
+            border-radius: 18px;
+            box-shadow: 0 28px 42px rgba(32, 28, 92, 0.2);
+            overflow: hidden;
             display: flex;
             flex-direction: column;
         }
-        .logo {
-            font-weight: 700;
-            font-size: 1.02rem;
-            letter-spacing: 0.12em;
-            color: #2b1f63;
-            text-transform: uppercase;
-            margin-bottom: 0.65rem;
+        .chat-header-row {
             display: flex;
             align-items: center;
-            gap: 0.4rem;
+            justify-content: space-between;
+            background: #f7f8ff;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #edf0ff;
         }
-        .logo::before {
-            content: "";
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #8d6bff;
+        .chat-header-row div[data-testid="column"] {
+            padding: 0 !important;
+        }
+        .chat-header-row div[data-testid="stButton"] {
+            margin: 0 !important;
+        }
+        .chat-header-row .logo {
+            font-weight: 700;
+            font-size: 0.92rem;
+            letter-spacing: 0.08em;
+            color: #2b1f63;
+            text-transform: uppercase;
+        }
+        .chat-header-row div[data-testid="stButton"] > button {
+            border: none;
+            background: #ebeaff;
+            color: #4537a0;
+            border-radius: 10px;
+            width: 32px;
+            height: 32px;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+        .chat-body {
+            background: #fafaff;
+            padding: 1rem;
+            max-height: 280px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
         }
         .chat-bubble {
-            padding: 0.75rem 0.95rem;
+            padding: 0.75rem 0.9rem;
             border-radius: 12px;
-            max-width: 100%;
             font-size: 0.95rem;
             line-height: 1.5rem;
-            background: #f7f8ff;
-            color: #2c314b;
-            border: 1px solid rgba(126, 120, 220, 0.12);
+            background: #fff;
+            border: 1px solid #e3e5fb;
+            color: #2f3252;
         }
-        .user-bubble {
-            background: #ece8ff;
-            border-color: rgba(126, 120, 220, 0.3);
+        .chat-bubble.user {
             margin-left: auto;
+            background: #ede9ff;
+            border-color: #d5cffc;
             color: #2b2262;
         }
-        .bot-bubble {
-            background: #f7f8ff;
+        .chat-footer {
+            padding: 0.9rem 1rem 1.1rem;
+            background: #ffffff;
+            border-top: 1px solid #edf0ff;
+            display: flex;
+            flex-direction: column;
+            gap: 0.55rem;
         }
-        .chat-controls-title {
+        .chat-footer-note {
+            font-size: 0.72rem;
+            color: #7d8090;
+            text-align: center;
+            padding: 0 1rem 0.9rem;
+        }
+        .chat-footer-title {
             font-size: 0.9rem;
             font-weight: 600;
-            letter-spacing: 0;
-            text-transform: none;
             color: #2b2262;
-            margin-bottom: 0.55rem;
         }
-        .chat-wrapper.buttons div[data-testid="stButton"] {
-            width: 100%;
-            margin-bottom: 0.4rem;
+        .chat-footer div[data-testid="stTextInputRoot"] input {
+            border-radius: 12px;
+            border: 1px solid #d9dcf9;
+            padding: 0.7rem 0.85rem;
+            font-size: 0.95rem;
+            color: #2b2262;
         }
-        .chat-wrapper.buttons div[data-testid="stButton"]:last-child {
-            margin-bottom: 0;
+        .chat-footer div[data-testid="stTextInputRoot"] label {
+            display: none;
         }
-        .chat-wrapper.buttons div[data-testid="stButton"] > button {
+        .chat-footer div[data-testid="stButton"] > button {
             width: 100%;
             text-align: left;
             padding: 0.75rem 0.9rem;
@@ -147,38 +149,16 @@ st.markdown(
             color: #2b2262;
             font-weight: 600;
             font-size: 0.95rem;
-            transition: all 0.15s ease;
         }
-        div[data-testid="stButton"] > button:hover {
+        .chat-footer div[data-testid="stButton"] > button:hover {
             border-color: #b8bcf3;
             background: #ebe9ff;
-            transform: translateY(-1px);
-        }
-        .chat-wrapper.buttons div[data-testid="textInputRoot"] {
-            margin-bottom: 0.55rem;
-        }
-        .chat-wrapper.buttons div[data-testid="textInputRoot"] input {
-            border-radius: 12px;
-            border: 1px solid #d9dcf9;
-            background: #ffffff;
-            padding: 0.68rem 0.88rem;
-            font-size: 0.95rem;
-            color: #2b2262;
-            transition: border 0.2s ease, box-shadow 0.2s ease;
-        }
-        .chat-wrapper.buttons div[data-testid="textInputRoot"] label {
-            display: none;
-        }
-        .chat-wrapper.buttons div[data-testid="textInputRoot"] input:focus {
-            outline: none;
-            border-color: #acb0f3;
-            box-shadow: 0 0 0 3px rgba(172, 176, 243, 0.28);
         }
         .chat-launcher {
             position: fixed;
             right: 32px;
-            bottom: 160px;
-            z-index: 1000;
+            bottom: 32px;
+            z-index: 1200;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -192,16 +172,13 @@ st.markdown(
             height: 58px;
             border-radius: 50%;
             border: none;
-            background: linear-gradient(135deg, #7762ff, #a879ff);
+            background: linear-gradient(135deg, #7c63ff, #a879ff);
             color: #fff;
             font-size: 1.5rem;
-            box-shadow: 0 18px 32px rgba(45, 37, 89, 0.23);
-        }
-        .chat-launcher div[data-testid="stButton"] > button:hover {
-            filter: brightness(1.08);
+            box-shadow: 0 18px 32px rgba(45, 37, 89, 0.24);
         }
         .chat-launcher .launcher-label {
-            margin-top: 0.45rem;
+            margin-top: 0.4rem;
             text-align: center;
             font-size: 0.75rem;
             font-weight: 600;
@@ -210,23 +187,8 @@ st.markdown(
             letter-spacing: 0.05em;
         }
         @media (max-width: 640px) {
-            [data-testid="stAppViewContainer"] .block-container {
-                max-width: 100% !important;
-                width: 100% !important;
-                margin-right: 16px !important;
-                margin-bottom: 140px !important;
-            }
-            .chat-launcher {
-                right: 18px;
-                bottom: 140px;
-            }
-        }
-        .footer {
-            font-size: 0.72rem;
-            color: #7d8090;
-            text-align: right;
-            margin-right: 2.5rem;
-            margin-top: 0.8rem;
+            .chat-shell { width: min(360px, calc(100vw - 32px)); right: 16px; bottom: 140px; }
+            .chat-launcher { right: 18px; bottom: 20px; }
         }
     </style>
     """,
@@ -240,57 +202,64 @@ if "stage" not in st.session_state:
     st.session_state["stage"] = "intro"
     st.session_state["chat_log"] = []
 
+launcher_clicked = False
 launcher_container = st.empty()
 with launcher_container:
-    st.markdown('<div class="chat-launcher">', unsafe_allow_html=True)
-    icon = "✖" if st.session_state["chat_open"] else "💬"
-    launcher_clicked = st.button(icon, key="chat_launcher_button")
-    st.markdown(
-        f'<div class="launcher-label">{ "Close" if st.session_state["chat_open"] else "Chat" }</div>',
-        unsafe_allow_html=True,
-    )
-    st.markdown('</div>', unsafe_allow_html=True)
+    if not st.session_state["chat_open"]:
+        st.markdown('<div class="chat-launcher">', unsafe_allow_html=True)
+        launcher_clicked = st.button("💬", key="chat_launcher_button")
+        st.markdown('<div class="launcher-label">Chat</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    else:
+        launcher_clicked = False
 
 if launcher_clicked:
     st.session_state["chat_open"] = not st.session_state["chat_open"]
     st.rerun()
 
 if st.session_state["chat_open"]:
-    chat_container = st.container()
-    button_container = st.container()
+    shell = st.container()
+    with shell:
+        st.markdown('<div class="chat-shell"><div class="chat-card">', unsafe_allow_html=True)
 
-    with chat_container:
-        st.markdown('<div class="chat-wrapper history">', unsafe_allow_html=True)
-        st.markdown('<div class="logo">FEMALE FOUNDRY</div>', unsafe_allow_html=True)
+        st.markdown('<div class="chat-header-row">', unsafe_allow_html=True)
+        header_cols = st.columns([0.8, 0.2])
+        with header_cols[0]:
+            st.markdown('<div class="logo">Female Foundry</div>', unsafe_allow_html=True)
+        with header_cols[1]:
+            if st.button("✖", key="close_chat"):
+                st.session_state["chat_open"] = False
+                st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
+        st.markdown('<div class="chat-body">', unsafe_allow_html=True)
         if st.session_state["chat_log"]:
             for role, text in st.session_state["chat_log"]:
-                bubble_class = "user-bubble" if role == "user" else "bot-bubble"
-                st.markdown(f'<div class="chat-bubble {bubble_class}">{text}</div>', unsafe_allow_html=True)
+                role_class = "user" if role == "user" else ""
+                st.markdown(f'<div class="chat-bubble {role_class}">{text}</div>', unsafe_allow_html=True)
         else:
             st.markdown(
-                '<div class="chat-bubble bot-bubble">Hi! I’m the Female Foundry assistant. Shall we get started?</div>',
+                '<div class="chat-bubble">Hi! I’m the Female Foundry assistant. Shall we get started?</div>',
                 unsafe_allow_html=True,
             )
         st.markdown('</div>', unsafe_allow_html=True)
 
-    with button_container:
-        st.markdown('<div class="chat-wrapper buttons">', unsafe_allow_html=True)
+        st.markdown('<div class="chat-footer">', unsafe_allow_html=True)
 
         titles = {
             "intro": "Ready to begin?",
             "ask_name": "Tell me your name",
             "menu_primary": "Choose what to explore",
-            "menu_secondary": "Fine-tune your choice",
+            "menu_secondary": "Fine‑tune your choice",
             "show_info": "Here’s what I found",
         }
         st.markdown(
-            f'<div class="chat-controls-title">{titles.get(st.session_state["stage"], "Continue")}</div>',
+            f'<div class="chat-footer-title">{titles.get(st.session_state["stage"], "Continue")}</div>',
             unsafe_allow_html=True,
         )
 
         if st.session_state["stage"] == "intro":
-            if st.button("I’m ready"):
+            if st.button("I’m ready", key="cta_ready"):
                 st.session_state["chat_log"].append(("bot", "First things first—what’s your name?"))
                 st.session_state["stage"] = "ask_name"
                 st.rerun()
@@ -304,10 +273,11 @@ if st.session_state["chat_open"]:
             )
             if st.button("Continue", key="visitor_name_submit"):
                 if name.strip():
-                    st.session_state["visitor_name"] = name.strip().title()
-                    st.session_state["chat_log"].append(("user", name.strip().title()))
+                    pretty_name = name.strip().title()
+                    st.session_state["visitor_name"] = pretty_name
+                    st.session_state["chat_log"].append(("user", pretty_name))
                     st.session_state["chat_log"].append(
-                        ("bot", f"Nice to meet you, {name.strip().title()}! Choose what you’d like to explore:")
+                        ("bot", f"Nice to meet you, {pretty_name}! Choose what you’d like to explore:")
                     )
                     st.session_state["stage"] = "menu_primary"
                     st.rerun()
@@ -319,10 +289,10 @@ if st.session_state["chat_open"]:
                 "VC & Funding Insights",
                 "Female Foundry Programs",
                 "Community & Stories",
-                "Contact & Partners"
+                "Contact & Partners",
             ]
             for opt in options:
-                if st.button(opt, key=opt):
+                if st.button(opt, key=f"primary_{opt}"):
                     st.session_state["chat_log"].append(("user", opt))
                     st.session_state["primary_choice"] = opt
                     st.session_state["stage"] = "menu_secondary"
@@ -334,10 +304,10 @@ if st.session_state["chat_open"]:
                 "VC & Funding Insights": ["Headline metrics", "Deep Tech & AI", "Using the Index"],
                 "Female Foundry Programs": ["AI Visionaries", "AI Hustle", "Sunday Newsletter"],
                 "Community & Stories": ["Join the community", "Campaigns", "Shop"],
-                "Contact & Partners": ["Contact", "Partners", "Media coverage"]
+                "Contact & Partners": ["Contact", "Partners", "Media coverage"],
             }
             for opt in sub_map.get(choice, []):
-                if st.button(opt, key=opt):
+                if st.button(opt, key=f"secondary_{opt}"):
                     st.session_state["chat_log"].append(("user", opt))
                     st.session_state["sub_choice"] = opt
                     st.session_state["stage"] = "show_info"
@@ -379,7 +349,7 @@ if st.session_state["chat_open"]:
                 "Media coverage": (
                     "Female Foundry is featured in FT Adviser, Maddyness, tech.eu, UKTN, Sifted, Startups Magazine, TFN and more. "
                     "Use these logos (shown above the partner grid) in your decks or press materials."
-                )
+                ),
             }
             answer = info_map.get(st.session_state.get("sub_choice"), "")
             st.session_state["chat_log"].append(("bot", answer))
@@ -387,6 +357,6 @@ if st.session_state["chat_open"]:
             st.session_state["stage"] = "menu_primary"
             st.rerun()
 
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="chat-wrapper footer">Powered by Female Foundry • Embed this widget inside Wix via iframe.</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)  # close footer
+        st.markdown('<div class="chat-footer-note">Powered by Female Foundry • Embed this widget inside Wix via iframe.</div>', unsafe_allow_html=True)
+        st.markdown('</div></div>', unsafe_allow_html=True)  # close card and shell
