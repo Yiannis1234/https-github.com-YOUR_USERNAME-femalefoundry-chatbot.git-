@@ -32,7 +32,7 @@ st.markdown(
             background: transparent !important;
             padding: 0 !important;
             display: flex;
-            justify-content: flex-start;
+            justify-content: flex-end;
             align-items: flex-end;
             min-height: 100vh;
         }
@@ -50,9 +50,9 @@ st.markdown(
         [data-testid="stAppViewContainer"] .block-container {
             max-width: 360px !important;
             width: 360px !important;
-            margin-left: 28px !important;
-            margin-right: auto !important;
-            margin-bottom: 24px !important;
+            margin-left: auto !important;
+            margin-right: 28px !important;
+            margin-bottom: 160px !important;
             margin-top: auto !important;
             padding: 0 !important;
             background: transparent !important;
@@ -176,9 +176,9 @@ st.markdown(
         }
         .chat-launcher {
             position: fixed;
-            left: 32px;
-            bottom: 108px;
-            z-index: 999;
+            right: 32px;
+            bottom: 160px;
+            z-index: 1000;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -213,11 +213,12 @@ st.markdown(
             [data-testid="stAppViewContainer"] .block-container {
                 max-width: 100% !important;
                 width: 100% !important;
-                margin-left: 16px !important;
+                margin-right: 16px !important;
+                margin-bottom: 140px !important;
             }
             .chat-launcher {
-                left: 18px;
-                bottom: 86px;
+                right: 18px;
+                bottom: 140px;
             }
         }
         .footer {
@@ -233,7 +234,7 @@ st.markdown(
 )
 
 if "chat_open" not in st.session_state:
-    st.session_state["chat_open"] = False
+    st.session_state["chat_open"] = True
 
 if "stage" not in st.session_state:
     st.session_state["stage"] = "intro"
