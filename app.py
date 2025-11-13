@@ -63,6 +63,9 @@ st.markdown(
             max-height: 320px;
             overflow-y: auto;
             padding-bottom: 0.6rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
         }
         .chat-wrapper.buttons {
             border-radius: 0 0 22px 22px;
@@ -139,15 +142,23 @@ st.markdown(
         }
         .chat-wrapper.buttons div[data-testid="textInputRoot"] input {
             border-radius: 12px;
-            border: 1px solid #d8dafa;
-            background: #ffffff;
-            padding: 0.65rem 0.75rem;
+            border: 1px solid rgba(120, 96, 255, 0.45);
+            background: linear-gradient(135deg, #f6f3ff 0%, #fef7ff 100%);
+            padding: 0.7rem 0.85rem;
             font-size: 0.95rem;
+            color: #2c1f6c;
+            transition: border 0.2s ease, box-shadow 0.2s ease;
         }
         .chat-wrapper.buttons div[data-testid="textInputRoot"] label {
             font-size: 0.85rem;
             font-weight: 600;
             color: #2c1f6c;
+            display: none;
+        }
+        .chat-wrapper.buttons div[data-testid="textInputRoot"] input:focus {
+            outline: none;
+            border-color: rgba(120, 96, 255, 0.9);
+            box-shadow: 0 0 0 3px rgba(122, 77, 255, 0.18);
         }
         .chat-launcher {
             position: fixed;
@@ -243,8 +254,13 @@ if st.session_state["chat_open"]:
                 st.rerun()
 
         elif st.session_state["stage"] == "ask_name":
-            name = st.text_input("Your name")
-            if st.button("Continue"):
+            name = st.text_input(
+                "Your name",
+                key="visitor_name_input",
+                placeholder="Type your name…",
+                label_visibility="collapsed",
+            )
+            if st.button("Continue", key="visitor_name_submit"):
                 if name.strip():
                     st.session_state["visitor_name"] = name.strip().title()
                     st.session_state["chat_log"].append(("user", name.strip().title()))
