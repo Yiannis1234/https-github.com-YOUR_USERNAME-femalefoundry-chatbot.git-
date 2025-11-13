@@ -1,5 +1,6 @@
 from pathlib import Path
 import json
+import html
 import streamlit as st
 
 DATA_PATH = Path("data/index.json")
@@ -11,6 +12,33 @@ KNOWLEDGE = {}
 for entry in CONTENT:
     if entry["id"].startswith("ff_site_") or entry["id"].startswith("survey_") or entry["id"].startswith("macro_") or entry["id"].startswith("headline_"):
         KNOWLEDGE[entry["id"]] = entry["answer"]
+
+
+def format_bot_message(text: str) -> str:
+    """Return HTML-safe bot message formatted as bullet list when helpful."""
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    if not lines:
+        return ""
+
+    bullet_mode = len(lines) > 1 or any(line[:1] in {"•", "-", "*"} for line in lines)
+    if bullet_mode:
+        cleaned = []
+        for line in lines:
+            if line[:1] in {"•", "-", "*"}:
+                line = line[1:].strip()
+            cleaned.append(html.escape(line))
+        items = "".join(f"<li>{line}</li>" for line in cleaned)
+        return f"<ul class='bot-list'>{items}</ul>"
+
+    return html.escape(lines[0])
+
+
+def reset_chat():
+    """Clear chat history and restart onboarding flow."""
+    st.session_state["chat_log"] = []
+    st.session_state["stage"] = "intro"
+    st.session_state.pop("visitor_name", None)
+    st.rerun()
 
 st.set_page_config(page_title="Female Foundry Chatbot", page_icon="🤖", layout="centered")
 
@@ -62,13 +90,10 @@ st.markdown(
             background: #f7f8ff;
             padding: 0.75rem 1rem;
             border-bottom: 1px solid #edf0ff;
+            gap: 0.5rem;
         }
-        .chat-header-row div[data-testid="column"] {
-            padding: 0 !important;
-        }
-        .chat-header-row div[data-testid="stButton"] {
-            margin: 0 !important;
-        }
+        .chat-header-row div[data-testid="column"] { padding: 0 !important; }
+        .chat-header-row div[data-testid="stButton"] { margin: 0 !important; }
         .chat-header-row .logo {
             font-weight: 700;
             font-size: 0.92rem;
@@ -77,14 +102,18 @@ st.markdown(
             text-transform: uppercase;
         }
         .chat-header-row div[data-testid="stButton"] > button {
+            width: 36px;
+            height: 36px;
             border: none;
+            border-radius: 12px;
             background: #ebeaff;
             color: #4537a0;
-            border-radius: 10px;
-            width: 32px;
-            height: 32px;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             cursor: pointer;
+            padding: 0;
+        }
+        .chat-header-row div[data-testid="stButton"] > button:hover {
+            filter: brightness(0.97);
         }
         .chat-body {
             background: #fafaff;
@@ -96,7 +125,7 @@ st.markdown(
             gap: 0.6rem;
         }
         .chat-bubble {
-            padding: 0.75rem 0.9rem;
+            padding: 0.78rem 0.95rem;
             border-radius: 12px;
             font-size: 0.95rem;
             line-height: 1.5rem;
@@ -110,19 +139,20 @@ st.markdown(
             border-color: #d5cffc;
             color: #2b2262;
         }
+        .chat-bubble ul.bot-list,
+        ul.bot-list {
+            padding-left: 1.1rem;
+            margin: 0;
+            list-style: disc;
+        }
+        .chat-bubble ul.bot-list li { margin-bottom: 0.35rem; }
         .chat-footer {
-            padding: 0.9rem 1rem 1.1rem;
+            padding: 0.95rem 1rem 1.1rem;
             background: #ffffff;
             border-top: 1px solid #edf0ff;
             display: flex;
             flex-direction: column;
             gap: 0.55rem;
-        }
-        .chat-footer-note {
-            font-size: 0.72rem;
-            color: #7d8090;
-            text-align: center;
-            padding: 0 1rem 0.9rem;
         }
         .chat-footer-title {
             font-size: 0.9rem;
@@ -136,9 +166,9 @@ st.markdown(
             font-size: 0.95rem;
             color: #2b2262;
         }
-        .chat-footer div[data-testid="stTextInputRoot"] label {
-            display: none;
-        }
+        .chat-footer div[data-testid="stTextInputRoot"] label { display: none; }
+        .chat-footer div[data-testid="stButton"] { margin-bottom: 0.4rem; }
+        .chat-footer div[data-testid="stButton"]:last-child { margin-bottom: 0; }
         .chat-footer div[data-testid="stButton"] > button {
             width: 100%;
             text-align: left;
@@ -154,19 +184,23 @@ st.markdown(
             border-color: #b8bcf3;
             background: #ebe9ff;
         }
+        .chat-footer-note {
+            font-size: 0.72rem;
+            color: #7d8090;
+            text-align: center;
+            padding: 0.75rem 1rem 0.9rem;
+        }
         .chat-launcher {
             position: fixed;
             right: 32px;
             bottom: 32px;
-            z-index: 1200;
+            z-index: 1100;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 0.35rem;
         }
-        .chat-launcher div[data-testid="stButton"] {
-            margin: 0 !important;
-        }
+        .chat-launcher div[data-testid="stButton"] { margin: 0 !important; }
         .chat-launcher div[data-testid="stButton"] > button {
             width: 58px;
             height: 58px;
@@ -223,11 +257,14 @@ if st.session_state["chat_open"]:
         st.markdown('<div class="chat-shell"><div class="chat-card">', unsafe_allow_html=True)
 
         st.markdown('<div class="chat-header-row">', unsafe_allow_html=True)
-        header_cols = st.columns([0.8, 0.2])
+        header_cols = st.columns([0.6, 0.2, 0.2], gap="small")
         with header_cols[0]:
             st.markdown('<div class="logo">Female Foundry</div>', unsafe_allow_html=True)
         with header_cols[1]:
-            if st.button("✖", key="close_chat"):
+            if st.button("↺", key="reset_chat_btn", help="Start over"):
+                reset_chat()
+        with header_cols[2]:
+            if st.button("✖", key="close_chat_btn", help="Hide chat"):
                 st.session_state["chat_open"] = False
                 st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
@@ -235,13 +272,15 @@ if st.session_state["chat_open"]:
         st.markdown('<div class="chat-body">', unsafe_allow_html=True)
         if st.session_state["chat_log"]:
             for role, text in st.session_state["chat_log"]:
-                role_class = "user" if role == "user" else ""
-                st.markdown(f'<div class="chat-bubble {role_class}">{text}</div>', unsafe_allow_html=True)
+                if role == "user":
+                    safe_text = html.escape(text)
+                    st.markdown(f'<div class="chat-bubble user">{safe_text}</div>', unsafe_allow_html=True)
+                else:
+                    content = text if ("<" in text and ">" in text) else html.escape(text)
+                    st.markdown(f'<div class="chat-bubble">{content}</div>', unsafe_allow_html=True)
         else:
-            st.markdown(
-                '<div class="chat-bubble">Hi! I’m the Female Foundry assistant. Shall we get started?</div>',
-                unsafe_allow_html=True,
-            )
+            intro_msg = format_bot_message("Hi! I’m the Female Foundry assistant. Shall we get started?")
+            st.markdown(f'<div class="chat-bubble">{intro_msg}</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown('<div class="chat-footer">', unsafe_allow_html=True)
@@ -250,7 +289,7 @@ if st.session_state["chat_open"]:
             "intro": "Ready to begin?",
             "ask_name": "Tell me your name",
             "menu_primary": "Choose what to explore",
-            "menu_secondary": "Fine‑tune your choice",
+            "menu_secondary": "Fine-tune your choice",
             "show_info": "Here’s what I found",
         }
         st.markdown(
@@ -260,7 +299,7 @@ if st.session_state["chat_open"]:
 
         if st.session_state["stage"] == "intro":
             if st.button("I’m ready", key="cta_ready"):
-                st.session_state["chat_log"].append(("bot", "First things first—what’s your name?"))
+                st.session_state["chat_log"].append(("bot", format_bot_message("First things first—what’s your name?")))
                 st.session_state["stage"] = "ask_name"
                 st.rerun()
 
@@ -277,7 +316,7 @@ if st.session_state["chat_open"]:
                     st.session_state["visitor_name"] = pretty_name
                     st.session_state["chat_log"].append(("user", pretty_name))
                     st.session_state["chat_log"].append(
-                        ("bot", f"Nice to meet you, {pretty_name}! Choose what you’d like to explore:")
+                        ("bot", format_bot_message(f"Nice to meet you, {pretty_name}! Choose what you’d like to explore:"))
                     )
                     st.session_state["stage"] = "menu_primary"
                     st.rerun()
@@ -315,45 +354,71 @@ if st.session_state["chat_open"]:
 
         elif st.session_state["stage"] == "show_info":
             info_map = {
-                "Headline metrics": KNOWLEDGE.get("headline_female_founders_2024"),
-                "Deep Tech & AI": KNOWLEDGE.get("science_stem_female_founders"),
+                "Headline metrics": (
+                    "• €5.76B raised by female-founded startups in Europe during 2024 (1,305 deals across 1,196 companies).\n"
+                    "• Represents roughly 12% of all European VC; deep tech attracts about one-third of that capital.\n"
+                    "• The Female Innovation Index aggregates 1,200+ survey responses and tracks 145k+ companies."
+                ),
+                "Deep Tech & AI": (
+                    "• Deep tech companies capture roughly one-third of the capital raised by female-founded startups.\n"
+                    "• Data & AI founders cite funding (67 mentions) and slow adoption (47) as top bottlenecks.\n"
+                    "• Health & life-science founders echo funding, adoption, and economic uncertainty challenges—filter Dealroom tags for precise counts."
+                ),
                 "Using the Index": (
-                    "Use the Index’s funnel metrics plus Dealroom exports (DR_FF_C_1 for VC into female-founded companies, "
-                    "DR_MC_C_5 for monthly totals) to build investment memos and monitor trends. "
-                    "The homepage’s ‘Female Innovation Index’ section links straight to the 2025 edition."
+                    "• Use Dealroom exports DR_FF_C_1 (female-founded VC) and DR_MC_C_5 (monthly capital) for charts.\n"
+                    "• Funnel views reveal drop-off points across awareness, acceleration, and funding.\n"
+                    "• Start from the 2025 Index landing page for methodology and download links."
                 ),
                 "AI Visionaries": (
-                    "Female Foundry’s AI incubator with Google Cloud supports founders experimenting with frontier AI. "
-                    "Click “Visit AI Visionaries” on the hero section to view cohorts, mentors, and application timing."
+                    "• Female Foundry’s AI incubator with Google Cloud for frontier AI founders.\n"
+                    "• ‘Visit AI Visionaries’ shows cohorts, mentors, curriculum, and application windows.\n"
+                    "• Offers tailored GTM support, mentor office hours, and showcase opportunities."
                 ),
                 "AI Hustle": (
-                    "AI Hustle is a free monthly 1-hour clinic with Agata Nowicka (up to three founders per session). "
-                    "Hit “Sign Up” in the AI Hustle panel to request a slot."
+                    "• Free monthly 1-hour clinic with Agata Nowicka (up to three founders).\n"
+                    "• Tap the homepage ‘Sign Up’ CTA to request a slot.\n"
+                    "• Ideal for quick GTM troubleshooting, warm intros, and accountability."
                 ),
                 "Sunday Newsletter": (
-                    "Stay informed with the Sunday Newsletter—venture news, fundraising tips, ecosystem insights. "
-                    "Select “Read” in the newsletter section to subscribe."
+                    "• Weekly roundup covering funding news, founder tactics, and ecosystem signals.\n"
+                    "• Use the homepage ‘Read’ button to browse the latest edition or subscribe.\n"
+                    "• Designed for female founders, operators, and allies tracking European venture."
                 ),
                 "Join the community": (
-                    "Join the 7,000+ strong community of founders, investors, and operators via the “Join the Community” button. "
-                    "It unlocks intros, resources, and access to Female Foundry programs."
+                    "• 7,000+ founders, investors, and operators focused on female-led innovation.\n"
+                    "• Click ‘Join the Community’ to request access to intros, events, and resources.\n"
+                    "• Members tap curated deal flow, mentor sessions, and partner offers."
                 ),
                 "Campaigns": (
-                    "Scroll to “Celebrating female founders” and tap “Watch all” to see storytelling campaigns filmed from a female perspective."
+                    "• ‘Celebrating female founders’ spotlights stories you can feature or amplify.\n"
+                    "• Use the ‘Watch all’ CTA to stream short films and social assets.\n"
+                    "• Great for investor updates, internal culture decks, or event content."
                 ),
                 "Shop": (
-                    "The Female Foundry Shop (linked in the footer) offers identity assets and merchandise—ideal for events, partners, or supporter gifts."
+                    "• Female Foundry Shop offers identity assets, merch, and partner gifting ideas.\n"
+                    "• Linked from the site footer—ships worldwide with limited drops.\n"
+                    "• Popular for event swag, partner onboarding, or community giveaways."
                 ),
-                "Contact": KNOWLEDGE.get("ff_site_contact"),
-                "Partners": KNOWLEDGE.get("ff_site_navigation"),
+                "Contact": (
+                    "• Email HELLO@FEMALEFOUNDRY.CO for partnerships or press.\n"
+                    "• HQ: 11 Welbeck Street, W1G 9XZ, London (by appointment).\n"
+                    "• Footer also links to About, Partners, Careers, and Privacy Policy."
+                ),
+                "Partners": (
+                    "• Explore corporate and ecosystem partners via the footer link.\n"
+                    "• Collaboration areas include scouting, thought leadership, and program support.\n"
+                    "• Submit interest through the partner form for a follow-up call."
+                ),
                 "Media coverage": (
-                    "Female Foundry is featured in FT Adviser, Maddyness, tech.eu, UKTN, Sifted, Startups Magazine, TFN and more. "
-                    "Use these logos (shown above the partner grid) in your decks or press materials."
+                    "• Featured in FT Adviser, Maddyness, tech.eu, UKTN, Sifted, Startups Magazine, TFN, and more.\n"
+                    "• Logos appear above the partner grid for easy export to decks.\n"
+                    "• Cite coverage to boost credibility with LPs, corporates, or press."
                 ),
             }
             answer = info_map.get(st.session_state.get("sub_choice"), "")
-            st.session_state["chat_log"].append(("bot", answer))
-            st.session_state["chat_log"].append(("bot", "Anything else you'd like to explore?"))
+            formatted = format_bot_message(answer)
+            st.session_state["chat_log"].append(("bot", formatted))
+            st.session_state["chat_log"].append(("bot", format_bot_message("Anything else you'd like to explore?")))
             st.session_state["stage"] = "menu_primary"
             st.rerun()
 
