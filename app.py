@@ -1,448 +1,306 @@
 import streamlit as st
-import json
-import os
-import uuid
-import re
-import csv
-from functools import lru_cache
-from pathlib import Path
-from openai import OpenAI
-from datetime import datetime
 
-# Page config
 st.set_page_config(
-    page_title="Female Foundry Chatbot",
-    page_icon="💬",
+    page_title="Female Foundry Navigator",
+    page_icon="✨",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed",
 )
 
-# Lightweight styling for clean layout and mobile fix
-st.markdown(
-    """
-    <style>
-        body {
-            font-family: "Inter", "SF Pro Display", sans-serif;
-            background: radial-gradient(circle at top, #fdf9ff 0%, #f5f7ff 45%, #f3f5f9 100%) !important;
-            color: #172036;
-        }
-        [data-testid="stAppViewContainer"] {
-            background: transparent;
-        }
-        [data-testid="stHeader"] {
-            background: transparent;
-            border-bottom: none;
-        }
+CUSTOM_CSS = """
+<style>
+    body {
+        font-family: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
+        background: radial-gradient(circle at top, #fdf6ff 0%, #f4f7ff 35%, #f2f4f8 100%) !important;
+        color: #161d2b;
+    }
+    [data-testid="stAppViewContainer"] {
+        background: transparent;
+    }
+    [data-testid="stHeader"] {
+        background: transparent;
+        border-bottom: none;
+    }
+    .main .block-container {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 2.5rem 2.5rem 5rem !important;
+    }
+    .hero-card {
+        background: rgba(255,255,255,0.9);
+        border: 1px solid rgba(123,77,255,0.12);
+        border-radius: 32px;
+        padding: 2.4rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 24px 68px rgba(23, 32, 54, 0.08);
+    }
+    .hero-card h1 {
+        font-size: clamp(2.2rem, 4vw, 3rem);
+        margin: 0 0 0.8rem 0;
+        letter-spacing: -0.5px;
+    }
+    .hero-card p {
+        font-size: 1.05rem;
+        color: #475067;
+        margin: 0;
+    }
+    .option-card {
+        background: rgba(255,255,255,0.88);
+        border-radius: 20px;
+        padding: 1.8rem;
+        border: 1px solid rgba(123,77,255,0.08);
+        box-shadow: 0 16px 40px rgba(20, 21, 36, 0.06);
+        margin-top: 1rem;
+    }
+    .option-card h3 {
+        margin-top: 0;
+        margin-bottom: 0.6rem;
+    }
+    .cta-link {
+        display: inline-block;
+        margin-top: 0.4rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #7b4dff, #ff60b2);
+        color: #fff !important;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .reset-btn > button {
+        background: transparent;
+        color: #7b4dff;
+        border: 1px solid rgba(123,77,255,0.25);
+        border-radius: 999px;
+        padding: 0.4rem 1.1rem;
+    }
+    @media (max-width: 768px) {
         .main .block-container {
-            max-width: 880px;
-            margin: 0 auto;
-            padding: 2rem 2.5rem 6rem !important;
+            padding: 1.5rem 1.2rem 5rem !important;
         }
-        .ff-card {
-            background: rgba(255,255,255,0.85);
-            border-radius: 20px;
-            padding: 1.8rem;
-            box-shadow: 0 18px 40px rgba(22,29,43,0.08);
-            border: 1px solid rgba(123,77,255,0.06);
-            margin-bottom: 1.8rem;
+    }
+</style>
+"""
+
+st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+
+GUIDED_CONTENT = {
+    "VC & Funding Insights": {
+        "Headline metrics (2024)": {
+            "summary": (
+                "Female-founded startups raised **€5.76B across 1,305 deals** in Europe during 2024, representing **1,196 companies** "
+                "(around 12% of total VC). The Female Innovation Index aggregates data from 1,215 survey respondents and 145,038 European companies."
+            ),
+            "bullets": [
+                "Use the Index to benchmark the innovation funnel, from idea-stage to growth funding.",
+                "Filter by country, sector, or stage to monitor where female founders are gaining momentum.",
+                "Combine survey evidence with Dealroom data for investment memos or LP updates."
+            ],
+            "links": [
+                ("Explore the Female Innovation Index (2025 edition)", "https://www.femalefoundry.co/"),
+                ("Request datasets via Dealroom (DR_FF_C_1, DR_MC_C_5, etc.)", "https://www.femalefoundry.co/")
+            ]
+        },
+        "Deep Tech & AI focus": {
+            "summary": (
+                "About **one-third of 2024 capital raised by female-founded startups flowed into Deep Tech and AI ventures**. "
+                "Survey respondents in Data & AI (136 founders) cited access to funding (67 mentions), slow tech adoption (47), cultural norms (29) "
+                "and economic uncertainty (24) as top hurdles."
+            ),
+            "bullets": [
+                "Deep Tech and health ventures highlight the largest funding needs by ticket size.",
+                "Use these insights to prioritise scouting or investment theses in frontier tech.",
+                "Pair survey narratives with deal-level data to evidence the opportunity."
+            ],
+            "links": [
+                ("Download Deep Tech overview", "https://www.femalefoundry.co/"),
+                ("Visit AI Visionaries", "https://www.femalefoundry.co/")
+            ]
+        },
+        "How to use the Index": {
+            "summary": (
+                "The Index provides funnel metrics across sectors. Pair it with Female Foundry campaigns and community intel to support fundraising, diligence, or policy briefs."
+            ),
+            "bullets": [
+                "Cross-reference company profiles with the Female Foundry community for warm introductions.",
+                "Identify under-served segments or stages for accelerator cohorts.",
+                "Prompt visitors to request the dataset inside Wix via a form or CRM action."
+            ],
+            "links": [
+                ("Access ecosystem data", "https://www.femalefoundry.co/")
+            ]
         }
-        .ff-card h1 {
-            margin-bottom: 0.4rem;
-            font-size: clamp(1.8rem, 4vw, 2.4rem);
-            letter-spacing: -0.03em;
+    },
+    "Female Foundry Programs": {
+        "AI Visionaries incubator": {
+            "summary": (
+                "Flagship incubator in partnership with Google Cloud supporting AI-native founders. The homepage CTA ‘Visit AI Visionaries’ leads to cohorts, mentors, and application details."
+            ),
+            "bullets": [
+                "Ideal for founders building frontier AI products in Europe.",
+                "Backed by Google Cloud mentors and Female Foundry’s network.",
+                "Embed the CTA in Wix to drive applications or discovery calls."
+            ],
+            "links": [("Visit AI Visionaries", "https://www.femalefoundry.co/")]
+        },
+        "AI Hustle sessions": {
+            "summary": (
+                "Free monthly 1-hour clinics with Agata Nowicka for up to three founders. Focus on growth, GTM, connections, or bottleneck busting in the AI era."
+            ),
+            "bullets": [
+                "Apply via the ‘Sign Up’ CTA on the homepage.",
+                "Great for founders transitioning from MVP to traction.",
+                "Use in Wix to drive bookings or integrate Calendly." 
+            ],
+            "links": [("Reserve an AI Hustle slot", "https://www.femalefoundry.co/")]
+        },
+        "Sunday Newsletter": {
+            "summary": (
+                "Weekly digest covering venture news, fundraising tips, and ecosystem insights for female founders and investors."
+            ),
+            "bullets": [
+                "Use the ‘Read’ CTA to subscribe.",
+                "Share with portfolio founders or LPs to keep them informed.",
+                "Automate signup via Wix forms connected to your mailing tool."
+            ],
+            "links": [("Subscribe to the Sunday Newsletter", "https://www.femalefoundry.co/")]
         }
-        .ff-card p {
-            margin: 0;
-            color: #475067;
+    },
+    "Community & Storytelling": {
+        "Join the 7,000+ community": {
+            "summary": (
+                "Female Foundry’s community spans 7,000+ founders, investors, advisers, and ecosystem shapers. The homepage invites you to ‘Join the Community’."
+            ),
+            "bullets": [
+                "Membership unlocks curated introductions, programs, and resources.",
+                "Useful call to action for investors seeking deal flow or partners backing founders.",
+                "Embed the join form inside Wix and sync submissions to your CRM."
+            ],
+            "links": [("Join the Female Foundry community", "https://www.femalefoundry.co/")]
+        },
+        "Campaigns & storytelling": {
+            "summary": (
+                "The ‘Celebrating female founders’ section highlights video campaigns and stories from a female perspective." 
+            ),
+            "bullets": [
+                "Use campaigns for media outreach or sponsor showcases.",
+                "Feature videos inside Wix to keep visitors engaged.",
+                "Great inspiration for founders building their narrative."
+            ],
+            "links": [("Watch campaigns", "https://www.femalefoundry.co/")]
+        },
+        "Female Foundry Shop": {
+            "summary": "Homepage footer links to the Shop where supporters can buy branded identity assets and merchandise.",
+            "bullets": [
+                "Perfect for welcome packs, event swag, or gifting.",
+                "You can deep-link directly from Wix to the shop page.",
+                "Helps reinforce Female Foundry identity." 
+            ],
+            "links": [("Visit the Shop", "https://www.femalefoundry.co/")]
         }
-        [data-testid="stChatMessage"] {
-            padding: 0.35rem 0 !important;
+    },
+    "Contact & Partners": {
+        "Contact & location": {
+            "summary": "HQ: 11 Welbeck Street, W1G 9XZ, London. Email: HELLO@FEMALEFOUNDRY.CO.",
+            "bullets": [
+                "Add these details to your Wix contact widgets.",
+                "Use the email link to trigger CRM automations.",
+                "Include address and email in investor decks." 
+            ],
+            "links": [
+                ("Email Female Foundry", "mailto:HELLO@FEMALEFOUNDRY.CO"),
+                ("Open in Google Maps", "https://maps.google.com/?q=11+Welbeck+Street,+W1G+9XZ+London")
+            ]
+        },
+        "Partners & collaborators": {
+            "summary": (
+                "Homepage partner grid features Impact Shakers, LPEA, SuperReturn International, AustrianStartups, Tech Barcelona, Slush, London Stock Exchange, IVCA, and more." 
+            ),
+            "bullets": [
+                "Showcase this partner list to attract sponsors or new collaborators.",
+                "Link logos to partner pages inside Wix.",
+                "Use the list in pitch decks or media kits." 
+            ],
+            "links": [("View partner list", "https://www.femalefoundry.co/")]
+        },
+        "Media coverage": {
+            "summary": "Female Foundry has been featured in FT Adviser, Maddyness, tech.eu, UKTN, Sifted (Financial Times), Startups Magazine, TFN, and others.",
+            "bullets": [
+                "Great proof points for credibility slides.",
+                "Add media logos to the Wix footer or press section.",
+                "Link to clippings in Notion or Google Drive for press follow-ups." 
+            ],
+            "links": [("Download press kit", "https://www.femalefoundry.co/")]
         }
-        [data-testid="stChatMessageContent"] {
-            background: rgba(255,255,255,0.92);
-            border-radius: 16px;
-            border: 1px solid rgba(123,77,255,0.07);
-            padding: 0.95rem 1.05rem;
-            box-shadow: 0 16px 34px -22px rgba(18, 21, 40, 0.35);
-        }
-        .stChatInput textarea {
-            border-radius: 18px !important;
-            border: 1px solid rgba(123,77,255,0.18) !important;
-            box-shadow: 0 10px 30px rgb(123 77 255 / 12%) !important;
-            font-size: 1rem !important;
-        }
-        /* Mobile input fix */
-        @media (max-width: 768px) {
-            .main .block-container {
-                padding: 1.5rem 1.2rem 6rem !important;
-            }
-            .stChatInputContainer {
-                position: fixed !important;
-                bottom: 16px !important;
-                left: 12px !important;
-                right: 12px !important;
-                z-index: 9999 !important;
-                background: white !important;
-                padding: 12px !important;
-                border-radius: 18px !important;
-                box-shadow: 0 12px 40px rgba(20,21,36,0.15) !important;
-            }
-            .stChatInput > div {
-                width: 100% !important;
-            }
-            [data-testid="stVerticalBlock"] {
-                padding-bottom: 120px !important;
-            }
-            .stSidebar {
-                display: none;
-            }
-        }
-    </style>
-    """,
+    }
+}
+
+
+def reset_conversation():
+    for key in ["visitor_name", "primary_choice"]:
+        if key in st.session_state:
+            del st.session_state[key]
+
+
+st.markdown(
+    '<div class="hero-card"><h1>Female Foundry Navigator</h1><p>Guide visitors through the Female Foundry ecosystem. '
+    "Embed this flow inside Wix for a guided, button-first experience.</p></div>",
     unsafe_allow_html=True,
 )
 
-# Initialize session state
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-if "logs" not in st.session_state:
-    st.session_state.logs = []
+if "visitor_name" not in st.session_state:
+    st.session_state["visitor_name"] = ""
 
-if not st.session_state.messages:
-    st.session_state.messages.append(
-        {
-            "role": "assistant",
-            "content": (
-                "Hi! I can answer questions using the Female Innovation Index survey, macro analysis, and the Dealroom order sheet.\n\n"
-                "**Try asking about:**\n"
-                "• VC raised by female-founded startups (2020–2024)\n"
-                "• Top sectors for new female-founded companies in 2024\n"
-                "• Deep tech or AI sub-sectors and their funding volumes\n"
-                "• Survey findings on fundraising difficulty or innovation barriers\n"
-                "• Inflation, interest rates, or IPO counts by country (2019–2024)\n"
-                "• Month-by-month VC investment in Europe for 2024\n"
-                "• Country-level breakdowns of funding or deal counts\n\n"
-                "Just describe the metric or Dealroom identifier you need—for example, \"Show DR_FF_C_1\" or "
-                "\"How many rounds did female-founded AI companies raise in 2024?\""
-            ),
-        }
-    )
-
-with st.container():
-    st.markdown(
-        '<div class="ff-card"><h1>Female Foundry Chatbot</h1><p>Ask me about the Female Innovation Index, key stats on female-founded startups, or how to get involved with Female Foundry.</p></div>',
-        unsafe_allow_html=True,
-    )
-
-# Paths
-DATA_DIR = Path(__file__).parent / "data"
-INDEX_PATH = DATA_DIR / "index.json"
-LOGS_PATH = DATA_DIR / "logs.json"
-ORDER_SHEET_LOCAL = DATA_DIR / "dealroom_order_sheet.csv"
-ORDER_SHEET_DOWNLOADS = Path.home() / "Downloads" / "Copy of Female Innovation Index 2025_ Dealroom Data - ORDER SHEET.csv"
-
-# Load OpenAI client with validation
-@st.cache_resource
-def get_openai_client():
-    """Initialize OpenAI client with proper error handling and validation."""
-    api_key = st.secrets.get("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
-    project_id = st.secrets.get("OPENAI_PROJECT_ID") or os.getenv("OPENAI_PROJECT_ID")
-
-    if not api_key:
-        st.error("⚠️ OPENAI_API_KEY not found in Streamlit Secrets or environment variables.")
-        return None
-    
-    if not api_key.startswith("sk-"):
-        st.warning("⚠️ API key format looks incorrect. Should start with 'sk-'")
-        return None
-
-    try:
-        client_kwargs = {"api_key": api_key.strip(), "timeout": 30.0}
-        if project_id:
-            client_kwargs["project"] = project_id.strip()
-        
-        return OpenAI(**client_kwargs)
-    except Exception as e:
-        st.error(f"⚠️ Failed to initialize OpenAI client: {str(e)[:100]}")
-        return None
-
-openai_client = get_openai_client()
-
-# Load data
-@st.cache_data
-def load_index():
-    try:
-        with open(INDEX_PATH, "r", encoding="utf-8") as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        data = []
-
-    # Extend with Dealroom order sheet entries if available
-    data.extend(load_dealroom_entries())
-    return data
-
-def load_logs():
-    try:
-        with open(LOGS_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return []
-
-def save_log(entry):
-    # Try to save log, but don't fail if we can't write to file (e.g., on Streamlit Cloud)
-    try:
-        logs = load_logs()
-        logs.append(entry)
-        with open(LOGS_PATH, "w", encoding="utf-8") as f:
-            json.dump(logs, f, indent=2)
-    except Exception as e:
-        # Silently fail - file writing is optional, logs are in session state anyway
-        pass
-
-
-@lru_cache()
-def load_dealroom_entries():
-    """Parse the Dealroom order sheet CSV into FAQ-style entries."""
-    entries = []
-    for path in (ORDER_SHEET_LOCAL, ORDER_SHEET_DOWNLOADS):
-        if not path.exists():
-            continue
-        try:
-            with path.open("r", encoding="utf-8-sig") as csv_file:
-                reader = csv.DictReader(csv_file)
-                for row in reader:
-                    entry = format_order_sheet_row(row)
-                    if entry:
-                        entries.append(entry)
-        except Exception as exc:
-            st.warning(f"Could not read Dealroom order sheet ({path.name}): {exc}")
+if not st.session_state["visitor_name"]:
+    st.markdown("### 👋 Welcome! Let’s personalise your journey.")
+    name_input = st.text_input("What’s your name?")
+    start_clicked = st.button("Start exploring")
+    if start_clicked:
+        if name_input.strip():
+            st.session_state["visitor_name"] = name_input.strip().title()
+            st.experimental_rerun()
         else:
-            break  # stop after first successful read
-    return entries
+            st.warning("Please enter a name to continue.")
+    st.stop()
 
+st.markdown(f"### Hi {st.session_state['visitor_name']}! What would you like to explore?")
 
-def format_order_sheet_row(row: dict):
-    identifier = (row.get("Identifyer") or "").strip()
-    description = (row.get("Description (FF)") or "").strip()
+primary_options = list(GUIDED_CONTENT.keys())
+primary_choice = st.radio(
+    "Pick a path:",
+    primary_options,
+    key="primary_choice",
+    horizontal=True,
+)
 
-    if not identifier and not description:
-        return None
+sub_options = list(GUIDED_CONTENT[primary_choice].keys())
+sub_choice_key = f"{primary_choice}_sub_choice"
+sub_choice = st.radio(
+    "Choose a topic to get a concise briefing:",
+    sub_options,
+    key=sub_choice_key,
+)
 
-    def clean(value: str):
-        if not value:
-            return None
-        return value.replace("\r\n", "\n").replace("\r", "\n").strip()
+selected_info = GUIDED_CONTENT[primary_choice][sub_choice]
 
-    info_lines = []
-    field_mapping = [
-        ("Identifier", "Identifyer"),
-        ("Section", "Section"),
-        ("Status", "Status"),
-        ("Female Foundry brief", "Description (FF)"),
-        ("Dealroom description", "Description (DR)"),
-        ("Expected output", "How the output looks like"),
-        ("Dealroom query", "DR Query"),
-        ("Link to Dealroom data", "Link o DR data"),
-        ("Embed code", "Embed Code"),
-        ("FF question", "Comment / Question to FF"),
-        ("FF answer (Dec 2024)", "Answer FF (12.2024)"),
-        ("Dealroom comment", "Comment DR (first export)"),
-        ("FF answer (Jan 2025)", "Answer FF 20.01.2025"),
-    ]
+st.markdown(
+    f'<div class="option-card"><h3>{sub_choice}</h3><p>{selected_info["summary"]}</p></div>',
+    unsafe_allow_html=True,
+)
 
-    for label, column in field_mapping:
-        value = clean(row.get(column))
-        if value:
-            info_lines.append(f"{label}: {value}")
+st.markdown("###### Why it matters")
+for bullet in selected_info.get("bullets", []):
+    st.markdown(f"- {bullet}")
 
-    if not info_lines:
-        return None
+if selected_info.get("links"):
+    st.markdown("###### Quick actions")
+    for label, url in selected_info["links"]:
+        st.markdown(f"- [{label}]({url})")
 
-    tags = ["dealroom"]
-    section = clean(row.get("Section"))
-    status = clean(row.get("Status"))
-    if section:
-        tags.extend([token for token in re.split(r"[+/,\s]+", section.lower()) if token])
-    if status:
-        tags.extend([token for token in re.split(r"[+/,\s]+", status.lower()) if token])
+st.divider()
+st.markdown(
+    "Need a different path? Use the reset button below. When embedding in Wix, you can capture the visitor’s name and choices "
+    "with Velo to log interest in specific programs or datasets."
+)
 
-    title = description or identifier or "Dealroom data insight"
-    question = f"What does the Dealroom order sheet cover for '{title}'?"
-
-    entry_id = identifier.lower().replace(" ", "_") if identifier else f"dealroom_{abs(hash(title))}"
-
-    return {
-        "id": entry_id,
-        "title": title,
-        "question": question,
-        "answer": "\n".join(info_lines),
-        "tags": tags,
-    }
-
-
-# Scoring function
-def score_entry(entry, message):
-    tokens = re.sub(r"[^a-z0-9\s]", " ", message.lower()).split()
-    tokens = [t for t in tokens if t]
-    alt_q = " ".join(entry.get("altQuestions", []))
-    haystack = (
-        f"{entry.get('title', '')} {entry.get('question', '')} "
-        f"{entry.get('answer', '')} {' '.join(entry.get('tags', []))} {alt_q}"
-    ).lower()
-    hits = sum(1 for token in tokens if token in haystack)
-    return hits / max(len(tokens), 1)
-
-def find_relevant_entries(message, limit=3):
-    index = load_index()
-    scored = [
-        {"entry": entry, "score": score_entry(entry, message)}
-        for entry in index
-        if entry.get("id") != "faq-004"
-    ]
-    scored.sort(key=lambda x: x["score"], reverse=True)
-    top = [x for x in scored[:limit] if x["score"] > 0]
-    if top and top[0]["score"] < 0.25:
-        return []
-    return top
-
-def build_prompt(message, entries):
-    context = "\n\n".join(
-        f"Title: {e['entry']['title']}\nQuestion: {e['entry']['question']}\nAnswer: {e['entry']['answer']}\nTags: {', '.join(e['entry']['tags'])}"
-        for e in entries
-    )
-    
-    return [
-        {
-            "role": "system",
-            "content": (
-                "You are the Female Foundry assistant. Always use the provided context and give the closest relevant figure or summary, "
-                "even if the exact number is not present. If no relevant facts exist at all, only then suggest contacting a human. "
-                "Respect privacy and never request sensitive personal data."
-            )
-        },
-        {
-            "role": "assistant",
-            "content": f"Context:\n{context}" if context else "No context available."
-        },
-        {
-            "role": "user",
-            "content": message
-        }
-    ]
-
-def generate_answer(message, entries, retries=2):
-    """Generate answer with retry logic and fallback to FAQ matching."""
-
-    def fallback_answer():
-        return (
-            "I couldn’t find that exact statistic in the Female Innovation Index dataset. "
-            "Here’s the closest context I do have:\n"
-            "• Female-founded startups raised €5.76B across 1,305 deals in Europe during 2024 (1,196 companies, ~12% of total VC).\n"
-            "• Roughly one-third of that capital went into Deep Tech and AI ventures led by women.\n"
-            "• Survey responses highlight access to funding, slow adoption of technology, cultural norms, and economic uncertainty "
-            "as the top hurdles for science-heavy female founders.\n"
-            "If you want a sharper number, you can filter the Dealroom export (e.g., by Deep Tech, Health, Life Sciences) "
-            "or specify a dataset such as DR_FF_C_1, and I’ll drill down."
-        )
-
-    if not openai_client:
-        return fallback_answer()
-
-    for attempt in range(retries + 1):
-        try:
-            response = openai_client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=build_prompt(message, entries),
-                temperature=0.3,
-                max_tokens=500,
-            )
-            content = response.choices[0].message.content.strip()
-            if content:
-                return content
-            return fallback_answer()
-        except Exception as e:
-            error_msg = str(e).lower()
-            if "api_key" in error_msg or "authentication" in error_msg or "invalid" in error_msg:
-                return fallback_answer()
-            elif "rate limit" in error_msg or "timeout" in error_msg:
-                if attempt < retries:
-                    import time
-                    time.sleep(1)
-                    continue
-                return "⏳ Rate limit reached. Please try again in a moment."
-
-    return fallback_answer()
-
-# UI
-st.title("💬 Female Foundry Chatbot MVP")
-st.caption("Prototype conversation experience showing how a Wix widget could talk to an LLM-backed service and log data.")
-
-# Chat interface
-chat_container = st.container()
-
-with chat_container:
-    # Display chat history
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
-            if "sources" in msg and msg["sources"]:
-                st.caption(f"Sources: {', '.join(s['title'] for s in msg['sources'])}")
-
-# Chat input
-if prompt := st.chat_input("Ask me about the Index, privacy, or how to join the community..."):
-    try:
-        # Add user message
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-        
-        # Generate response
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                relevant_entries = find_relevant_entries(prompt)
-                answer = generate_answer(prompt, relevant_entries)
-                sources = [{"id": e["entry"]["id"], "title": e["entry"]["title"]} for e in relevant_entries]
-                
-                st.markdown(answer)
-                if sources:
-                    st.caption(f"Sources: {', '.join(s['title'] for s in sources)}")
-            
-            # Log conversation (non-blocking)
-            try:
-                log_entry = {
-                    "id": str(uuid.uuid4()),
-                    "userId": "anonymous",
-                    "message": prompt,
-                    "answer": answer,
-                    "matchedEntries": [{"id": e["entry"]["id"], "score": e["score"]} for e in relevant_entries],
-                    "timestamp": datetime.now().isoformat()
-                }
-                save_log(log_entry)
-                st.session_state.logs.append(log_entry)
-            except Exception:
-                pass  # Logging is optional
-            
-            # Add assistant message to history
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": answer,
-                "sources": sources
-            })
-    except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
-        st.info("Please try again or refresh the page.")
-
-# Sidebar with info
-with st.sidebar:
-    st.header("About")
-    st.info("This is a demo chatbot for Female Foundry. It uses OpenAI's API to answer questions based on the Index database.")
-    
-    if st.button("Clear Chat History"):
-        st.session_state.messages = []
-        st.rerun()
-    
-    st.divider()
-    st.subheader("Analytics")
-    st.metric("Total Conversations", len(st.session_state.logs))
-    st.metric("Messages in Session", len(st.session_state.messages))
-
+if st.button("↺ Start over", key="reset", help="Reset name and selections", on_click=reset_conversation):
+    st.experimental_rerun()
