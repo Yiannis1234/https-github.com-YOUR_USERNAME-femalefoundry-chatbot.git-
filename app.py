@@ -44,7 +44,7 @@ st.markdown(
             width: 360px !important;
             margin-left: auto !important;
             margin-right: 28px !important;
-            margin-bottom: 28px !important;
+            margin-bottom: 24px !important;
             margin-top: auto !important;
             padding: 0 !important;
         }
@@ -62,6 +62,7 @@ st.markdown(
             margin-bottom: -0.25rem;
             max-height: 320px;
             overflow-y: auto;
+            padding-bottom: 0.6rem;
         }
         .chat-wrapper.buttons {
             border-radius: 0 0 22px 22px;
@@ -69,7 +70,9 @@ st.markdown(
             box-shadow: 0 18px 36px rgba(45, 37, 89, 0.12);
             background: rgba(255, 255, 255, 0.96);
             backdrop-filter: blur(8px);
-            padding-bottom: 1.2rem;
+            padding-bottom: 1.05rem;
+            display: flex;
+            flex-direction: column;
         }
         .logo {
             font-weight: 800;
@@ -108,10 +111,14 @@ st.markdown(
             border: 1px solid #e4e6f4;
             color: #262b3f;
         }
-        div[data-testid="stButton"] {
+        .chat-wrapper.buttons div[data-testid="stButton"] {
             width: 100%;
+            margin-bottom: 0.45rem;
         }
-        div[data-testid="stButton"] > button {
+        .chat-wrapper.buttons div[data-testid="stButton"]:last-child {
+            margin-bottom: 0;
+        }
+        .chat-wrapper.buttons div[data-testid="stButton"] > button {
             width: 100%;
             text-align: left;
             padding: 0.75rem 0.9rem;
@@ -127,17 +134,51 @@ st.markdown(
             border-color: #b4b7f3;
             background: #ebe9ff;
         }
-        div[data-testid="textInputRoot"] input {
+        .chat-wrapper.buttons div[data-testid="textInputRoot"] {
+            margin-bottom: 0.55rem;
+        }
+        .chat-wrapper.buttons div[data-testid="textInputRoot"] input {
             border-radius: 12px;
             border: 1px solid #d8dafa;
             background: #ffffff;
             padding: 0.65rem 0.75rem;
             font-size: 0.95rem;
         }
-        div[data-testid="textInputRoot"] label {
+        .chat-wrapper.buttons div[data-testid="textInputRoot"] label {
             font-size: 0.85rem;
             font-weight: 600;
             color: #2c1f6c;
+        }
+        .chat-launcher {
+            position: fixed;
+            right: 32px;
+            bottom: 32px;
+            z-index: 999;
+        }
+        .chat-launcher div[data-testid="stButton"] {
+            margin: 0 !important;
+        }
+        .chat-launcher div[data-testid="stButton"] > button {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #7a4dff, #fd6dc2);
+            color: #fff;
+            font-size: 1.6rem;
+            box-shadow: 0 18px 36px rgba(45, 37, 89, 0.22);
+        }
+        .chat-launcher div[data-testid="stButton"] > button:hover {
+            filter: brightness(1.08);
+        }
+        .chat-launcher .launcher-label {
+            margin-top: 0.45rem;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #2c1f6c;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
         .footer {
             font-size: 0.72rem;
@@ -151,124 +192,143 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+if "chat_open" not in st.session_state:
+    st.session_state["chat_open"] = False
+
 if "stage" not in st.session_state:
     st.session_state["stage"] = "intro"
     st.session_state["chat_log"] = []
 
-chat_container = st.container()
-button_container = st.container()
-
-with chat_container:
-    st.markdown('<div class="chat-wrapper history">', unsafe_allow_html=True)
-    st.markdown('<div class="logo">FEMALE FOUNDRY</div>', unsafe_allow_html=True)
-
-    if st.session_state["chat_log"]:
-        for role, text in st.session_state["chat_log"]:
-            bubble_class = "user-bubble" if role == "user" else "bot-bubble"
-            st.markdown(f'<div class="chat-bubble {bubble_class}">{text}</div>', unsafe_allow_html=True)
-    else:
-        st.markdown(
-            '<div class="chat-bubble bot-bubble">Hi! I’m the Female Foundry assistant. Shall we get started?</div>',
-            unsafe_allow_html=True,
-        )
+launcher_container = st.empty()
+with launcher_container:
+    st.markdown('<div class="chat-launcher">', unsafe_allow_html=True)
+    icon = "✖" if st.session_state["chat_open"] else "💬"
+    launcher_clicked = st.button(icon, key="chat_launcher_button")
+    st.markdown(
+        f'<div class="launcher-label">{ "Close" if st.session_state["chat_open"] else "Chat" }</div>',
+        unsafe_allow_html=True,
+    )
     st.markdown('</div>', unsafe_allow_html=True)
 
-with button_container:
-    st.markdown('<div class="chat-wrapper buttons">', unsafe_allow_html=True)
+if launcher_clicked:
+    st.session_state["chat_open"] = not st.session_state["chat_open"]
+    st.rerun()
 
-    if st.session_state["stage"] == "intro":
-        if st.button("I’m ready"):
-            st.session_state["chat_log"].append(("bot", "First things first—what’s your name?"))
-            st.session_state["stage"] = "ask_name"
+if st.session_state["chat_open"]:
+    chat_container = st.container()
+    button_container = st.container()
+
+    with chat_container:
+        st.markdown('<div class="chat-wrapper history">', unsafe_allow_html=True)
+        st.markdown('<div class="logo">FEMALE FOUNDRY</div>', unsafe_allow_html=True)
+
+        if st.session_state["chat_log"]:
+            for role, text in st.session_state["chat_log"]:
+                bubble_class = "user-bubble" if role == "user" else "bot-bubble"
+                st.markdown(f'<div class="chat-bubble {bubble_class}">{text}</div>', unsafe_allow_html=True)
+        else:
+            st.markdown(
+                '<div class="chat-bubble bot-bubble">Hi! I’m the Female Foundry assistant. Shall we get started?</div>',
+                unsafe_allow_html=True,
+            )
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with button_container:
+        st.markdown('<div class="chat-wrapper buttons">', unsafe_allow_html=True)
+
+        if st.session_state["stage"] == "intro":
+            if st.button("I’m ready"):
+                st.session_state["chat_log"].append(("bot", "First things first—what’s your name?"))
+                st.session_state["stage"] = "ask_name"
+                st.rerun()
+
+        elif st.session_state["stage"] == "ask_name":
+            name = st.text_input("Your name")
+            if st.button("Continue"):
+                if name.strip():
+                    st.session_state["visitor_name"] = name.strip().title()
+                    st.session_state["chat_log"].append(("user", name.strip().title()))
+                    st.session_state["chat_log"].append(
+                        ("bot", f"Nice to meet you, {name.strip().title()}! Choose what you’d like to explore:")
+                    )
+                    st.session_state["stage"] = "menu_primary"
+                    st.rerun()
+                else:
+                    st.warning("Let’s capture your name before we go on.")
+
+        elif st.session_state["stage"] == "menu_primary":
+            options = [
+                "VC & Funding Insights",
+                "Female Foundry Programs",
+                "Community & Stories",
+                "Contact & Partners"
+            ]
+            for opt in options:
+                if st.button(opt, key=opt):
+                    st.session_state["chat_log"].append(("user", opt))
+                    st.session_state["primary_choice"] = opt
+                    st.session_state["stage"] = "menu_secondary"
+                    st.rerun()
+
+        elif st.session_state["stage"] == "menu_secondary":
+            choice = st.session_state.get("primary_choice")
+            sub_map = {
+                "VC & Funding Insights": ["Headline metrics", "Deep Tech & AI", "Using the Index"],
+                "Female Foundry Programs": ["AI Visionaries", "AI Hustle", "Sunday Newsletter"],
+                "Community & Stories": ["Join the community", "Campaigns", "Shop"],
+                "Contact & Partners": ["Contact", "Partners", "Media coverage"]
+            }
+            for opt in sub_map.get(choice, []):
+                if st.button(opt, key=opt):
+                    st.session_state["chat_log"].append(("user", opt))
+                    st.session_state["sub_choice"] = opt
+                    st.session_state["stage"] = "show_info"
+                    st.rerun()
+
+        elif st.session_state["stage"] == "show_info":
+            info_map = {
+                "Headline metrics": KNOWLEDGE.get("headline_female_founders_2024"),
+                "Deep Tech & AI": KNOWLEDGE.get("science_stem_female_founders"),
+                "Using the Index": (
+                    "Use the Index’s funnel metrics plus Dealroom exports (DR_FF_C_1 for VC into female-founded companies, "
+                    "DR_MC_C_5 for monthly totals) to build investment memos and monitor trends. "
+                    "The homepage’s ‘Female Innovation Index’ section links straight to the 2025 edition."
+                ),
+                "AI Visionaries": (
+                    "Female Foundry’s AI incubator with Google Cloud supports founders experimenting with frontier AI. "
+                    "Click “Visit AI Visionaries” on the hero section to view cohorts, mentors, and application timing."
+                ),
+                "AI Hustle": (
+                    "AI Hustle is a free monthly 1-hour clinic with Agata Nowicka (up to three founders per session). "
+                    "Hit “Sign Up” in the AI Hustle panel to request a slot."
+                ),
+                "Sunday Newsletter": (
+                    "Stay informed with the Sunday Newsletter—venture news, fundraising tips, ecosystem insights. "
+                    "Select “Read” in the newsletter section to subscribe."
+                ),
+                "Join the community": (
+                    "Join the 7,000+ strong community of founders, investors, and operators via the “Join the Community” button. "
+                    "It unlocks intros, resources, and access to Female Foundry programs."
+                ),
+                "Campaigns": (
+                    "Scroll to “Celebrating female founders” and tap “Watch all” to see storytelling campaigns filmed from a female perspective."
+                ),
+                "Shop": (
+                    "The Female Foundry Shop (linked in the footer) offers identity assets and merchandise—ideal for events, partners, or supporter gifts."
+                ),
+                "Contact": KNOWLEDGE.get("ff_site_contact"),
+                "Partners": KNOWLEDGE.get("ff_site_navigation"),
+                "Media coverage": (
+                    "Female Foundry is featured in FT Adviser, Maddyness, tech.eu, UKTN, Sifted, Startups Magazine, TFN and more. "
+                    "Use these logos (shown above the partner grid) in your decks or press materials."
+                )
+            }
+            answer = info_map.get(st.session_state.get("sub_choice"), "")
+            st.session_state["chat_log"].append(("bot", answer))
+            st.session_state["chat_log"].append(("bot", "Anything else you'd like to explore?"))
+            st.session_state["stage"] = "menu_primary"
             st.rerun()
 
-    elif st.session_state["stage"] == "ask_name":
-        name = st.text_input("Your name")
-        if st.button("Continue"):
-            if name.strip():
-                st.session_state["visitor_name"] = name.strip().title()
-                st.session_state["chat_log"].append(("user", name.strip().title()))
-                st.session_state["chat_log"].append(
-                    ("bot", f"Nice to meet you, {name.strip().title()}! Choose what you’d like to explore:")
-                )
-                st.session_state["stage"] = "menu_primary"
-                st.rerun()
-            else:
-                st.warning("Let’s capture your name before we go on.")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    elif st.session_state["stage"] == "menu_primary":
-        options = [
-            "VC & Funding Insights",
-            "Female Foundry Programs",
-            "Community & Stories",
-            "Contact & Partners"
-        ]
-        for opt in options:
-            if st.button(opt, key=opt):
-                st.session_state["chat_log"].append(("user", opt))
-                st.session_state["primary_choice"] = opt
-                st.session_state["stage"] = "menu_secondary"
-                st.rerun()
-
-    elif st.session_state["stage"] == "menu_secondary":
-        choice = st.session_state.get("primary_choice")
-        sub_map = {
-            "VC & Funding Insights": ["Headline metrics", "Deep Tech & AI", "Using the Index"],
-            "Female Foundry Programs": ["AI Visionaries", "AI Hustle", "Sunday Newsletter"],
-            "Community & Stories": ["Join the community", "Campaigns", "Shop"],
-            "Contact & Partners": ["Contact", "Partners", "Media coverage"]
-        }
-        for opt in sub_map.get(choice, []):
-            if st.button(opt, key=opt):
-                st.session_state["chat_log"].append(("user", opt))
-                st.session_state["sub_choice"] = opt
-                st.session_state["stage"] = "show_info"
-                st.rerun()
-
-    elif st.session_state["stage"] == "show_info":
-        info_map = {
-            "Headline metrics": KNOWLEDGE.get("headline_female_founders_2024"),
-            "Deep Tech & AI": KNOWLEDGE.get("science_stem_female_founders"),
-            "Using the Index": (
-                "Use the Index’s funnel metrics plus Dealroom exports (DR_FF_C_1 for VC into female-founded companies, "
-                "DR_MC_C_5 for monthly totals) to build investment memos and monitor trends. "
-                "The homepage’s ‘Female Innovation Index’ section links straight to the 2025 edition."
-            ),
-            "AI Visionaries": (
-                "Female Foundry’s AI incubator with Google Cloud supports founders experimenting with frontier AI. "
-                "Click “Visit AI Visionaries” on the hero section to view cohorts, mentors, and application timing."
-            ),
-            "AI Hustle": (
-                "AI Hustle is a free monthly 1-hour clinic with Agata Nowicka (up to three founders per session). "
-                "Hit “Sign Up” in the AI Hustle panel to request a slot."
-            ),
-            "Sunday Newsletter": (
-                "Stay informed with the Sunday Newsletter—venture news, fundraising tips, ecosystem insights. "
-                "Select “Read” in the newsletter section to subscribe."
-            ),
-            "Join the community": (
-                "Join the 7,000+ strong community of founders, investors, and operators via the “Join the Community” button. "
-                "It unlocks intros, resources, and access to Female Foundry programs."
-            ),
-            "Campaigns": (
-                "Scroll to “Celebrating female founders” and tap “Watch all” to see storytelling campaigns filmed from a female perspective."
-            ),
-            "Shop": (
-                "The Female Foundry Shop (linked in the footer) offers identity assets and merchandise—ideal for events, partners, or supporter gifts."
-            ),
-            "Contact": KNOWLEDGE.get("ff_site_contact"),
-            "Partners": KNOWLEDGE.get("ff_site_navigation"),
-            "Media coverage": (
-                "Female Foundry is featured in FT Adviser, Maddyness, tech.eu, UKTN, Sifted, Startups Magazine, TFN and more. "
-                "Use these logos (shown above the partner grid) in your decks or press materials."
-            )
-        }
-        answer = info_map.get(st.session_state.get("sub_choice"), "")
-        st.session_state["chat_log"].append(("bot", answer))
-        st.session_state["chat_log"].append(("bot", "Anything else you'd like to explore?"))
-        st.session_state["stage"] = "menu_primary"
-        st.rerun()
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-st.markdown('<div class="chat-wrapper footer">Powered by Female Foundry • Embed this widget inside Wix via iframe.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="chat-wrapper footer">Powered by Female Foundry • Embed this widget inside Wix via iframe.</div>', unsafe_allow_html=True)
