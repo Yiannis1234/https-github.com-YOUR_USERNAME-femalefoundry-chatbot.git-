@@ -17,9 +17,12 @@ async function createSession() {
   if (!res.ok) throw new Error("Failed to create session");
   const data = await res.json();
   sessionId = data.session_id;
+  clearMessages();
   appendMessages(data.messages || []);
   renderOptions(data.options || []);
   openChat();
+  inputEl.placeholder = "Ask about programs, stats, etc.";
+  inputEl.focus();
 }
 
 async function resetSession() {
