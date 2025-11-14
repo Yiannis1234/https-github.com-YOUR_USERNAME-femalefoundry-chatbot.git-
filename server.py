@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import html
 import json
+import re
 from pathlib import Path
 from typing import Dict, List, Tuple
 from uuid import uuid4
@@ -27,6 +28,44 @@ SECONDARY_OPTIONS: Dict[str, List[str]] = {
     "Female Foundry Programs": ["AI Visionaries", "AI Hustle", "Sunday Newsletter"],
     "Community & Stories": ["Join the community", "Campaigns", "Shop"],
     "Contact & Partners": ["Contact", "Partners", "Media coverage"],
+}
+
+PRIMARY_KEYWORDS: Dict[str, str] = {
+    "funding": "VC & Funding Insights",
+    "vc": "VC & Funding Insights",
+    "investment": "VC & Funding Insights",
+    "program": "Female Foundry Programs",
+    "incubator": "Female Foundry Programs",
+    "ai hustle": "Female Foundry Programs",
+    "visionaries": "Female Foundry Programs",
+    "community": "Community & Stories",
+    "stories": "Community & Stories",
+    "shop": "Community & Stories",
+    "contact": "Contact & Partners",
+    "partner": "Contact & Partners",
+    "press": "Contact & Partners",
+}
+
+SECONDARY_KEYWORDS: Dict[str, str] = {
+    "headline": "Headline metrics",
+    "stat": "Headline metrics",
+    "metrics": "Headline metrics",
+    "deep tech": "Deep Tech & AI",
+    "ai": "Deep Tech & AI",
+    "index": "Using the Index",
+    "ai visionaries": "AI Visionaries",
+    "visionaries": "AI Visionaries",
+    "ai hustle": "AI Hustle",
+    "hustle": "AI Hustle",
+    "newsletter": "Sunday Newsletter",
+    "join the community": "Join the community",
+    "community": "Join the community",
+    "campaign": "Campaigns",
+    "shop": "Shop",
+    "contact": "Contact",
+    "email": "Contact",
+    "partner": "Partners",
+    "media": "Media coverage",
 }
 
 INFO_MAP: Dict[str, str] = {
@@ -159,12 +198,31 @@ def get_session(session_id: str) -> SessionState:
     return state
 
 
-def match_option(text: str, options: List[str]) -> str | None:
-    lowered = text.strip().lower()
-    for option in options:
-        if lowered == option.lower():
-            return option
+def keyword_match(text: str, mapping: Dict[str, str]) -> str | None:
+    text_lower = text.lower()
+    for keyword, value in mapping.items():
+        pattern = re.escape(keyword.lower())
+        if re.search(pattern, text_lower):
+            return value
     return None
+
+
+def deliver_info(state: SessionState, choice: str) -> SessionResponse:
+    info = INFO_MAP.get(choice)
+    if not info:
+        return respond(state, [format_bot_message("I don’t have that snippet yet—try another option.")], PRIMARY_OPTIONS)
+    formatted = format_bot_message(info)
+    follow_up = format_bot_message("Anything else you'd like to explore?")
+    state.history.append(("bot", formatted))
+    state.history.append(("bot", follow_up))
+    state.stage = "menu_primary"
+    state.primary_choice = None
+    return SessionResponse(
+        session_id=state.session_id,
+        messages=[{"role": "bot", "content": formatted}, {"role": "bot", "content": follow_up}],
+        options=PRIMARY_OPTIONS,
+        stage=state.stage,
+    )
 
 
 def respond(state: SessionState, responses: List[str], options: List[str]) -> SessionResponse:
@@ -194,8 +252,6 @@ def handle_message(state: SessionState, message: str) -> SessionResponse:
     state.history.append(("user", trimmed))
 
     if state.stage == "ask_name":
-        if not trimmed:
-            return respond(state, [format_bot_message("Let’s start with your name—just type it in.")], [])
         state.visitor_name = trimmed.title()
         state.stage = "menu_primary"
         responses = [
@@ -206,10 +262,23 @@ def handle_message(state: SessionState, message: str) -> SessionResponse:
     if state.stage == "menu_primary":
         match = match_option(trimmed, PRIMARY_OPTIONS)
         if not match:
+            keyword_hit = keyword_match(trimmed, PRIMARY_KEYWORDS)
+            if keyword_hit:
+                state.primary_choice = keyword_hit
+                state.stage = "menu_secondary"
+                options = SECONDARY_OPTIONS[keyword_hit]
+                responses = [format_bot_message(f"Great! Let’s drill into {keyword_hit}. Pick a specific topic:")]
+                return respond(state, responses, options)
+
+            secondary_hit = keyword_match(trimmed, SECONDARY_KEYWORDS)
+            if secondary_hit:
+                return deliver_info(state, secondary_hit)
+
             fallback = format_bot_message(
                 "Pick one of the quick options below, or ask something specific like ‘Female founders headline stats’ or ‘Tell me about AI Hustle’."
             )
             return respond(state, [fallback], PRIMARY_OPTIONS)
+
         state.primary_choice = match
         state.stage = "menu_secondary"
         options = SECONDARY_OPTIONS[match]
@@ -221,25 +290,27 @@ def handle_message(state: SessionState, message: str) -> SessionResponse:
         options = SECONDARY_OPTIONS.get(primary, [])
         match = match_option(trimmed, options)
         if not match:
+            keyword_hit = keyword_match(trimmed, SECONDARY_KEYWORDS)
+            if keyword_hit:
+                return deliver_info(state, keyword_hit)
             return respond(
                 state,
                 [format_bot_message("Choose one of the follow-up options so I can surface the right highlights.")],
                 options,
             )
-        state.stage = "menu_primary"
-        state.primary_choice = None
-        info = INFO_MAP.get(match)
-        if not info:
-            return respond(state, [format_bot_message("I don’t have that snippet yet—try another option.")], PRIMARY_OPTIONS)
-        responses = [
-            format_bot_message(info),
-            format_bot_message("Anything else you'd like to explore?"),
-        ]
-        return respond(state, responses, PRIMARY_OPTIONS)
+        return deliver_info(state, match)
 
     state.stage = "menu_primary"
     fallback = format_bot_message("Let's continue—pick a topic below or reset the chat (↺).")
     return respond(state, [fallback], PRIMARY_OPTIONS)
+
+
+def match_option(text: str, options: List[str]) -> str | None:
+    lowered = text.strip().lower()
+    for option in options:
+        if lowered == option.lower():
+            return option
+    return None
 
 
 def _current_options(state: SessionState) -> List[str]:
