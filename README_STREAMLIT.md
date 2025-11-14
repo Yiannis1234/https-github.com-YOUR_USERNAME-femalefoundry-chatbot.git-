@@ -1,6 +1,6 @@
-# Female Foundry Chatbot - Streamlit MVP
+# Female Foundry Chatbot
 
-A lightweight chatbot MVP demonstrating LLM integration with FAQ retrieval and conversation logging.
+A lightweight chatbot experience styled after Chatbase: a floating popup widget with guided options, powered by a FastAPI backend and a static HTML/CSS/JS frontend. The assistant serves curated Female Foundry insights without relying on Streamlit.
 
 ## 🚀 Quick Start (Local)
 
@@ -8,56 +8,51 @@ A lightweight chatbot MVP demonstrating LLM integration with FAQ retrieval and c
 # Install dependencies
 pip install -r requirements.txt
 
-# Set up secrets (optional for local testing)
-mkdir -p .streamlit
-cp .streamlit/secrets.toml.example .streamlit/secrets.toml
-# Edit .streamlit/secrets.toml and add your OPENAI_API_KEY
-
-# Run the app
-streamlit run app.py
+# Start the FastAPI server (served with uvicorn)
+uvicorn server:app --reload
 ```
 
-Visit: http://localhost:8501
+Open your browser at **http://localhost:8000**. The landing page is served from `frontend/index.html` and communicates with the API under `/api`.
 
-## 📦 Deploy to Streamlit Cloud
+## 📦 Deployment Snapshot
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete instructions.
+- The backend lives in `server.py` (FastAPI + in-memory session store).
+- Static assets (HTML/CSS/JS) are located in `frontend/` and are mounted by FastAPI at the root path.
+- The chat popup calls:
+  - `POST /api/session` to start a session.
+  - `POST /api/chat` to send a user message and receive bot replies/options.
+  - `POST /api/session/{id}/reset` to restart the flow.
+- No Streamlit runtime or `.streamlit` secrets are required.
 
-**Quick version:**
-1. Push code to GitHub
-2. Go to https://share.streamlit.io/
-3. Connect your repo
-4. Add `OPENAI_API_KEY` in Streamlit Cloud Secrets
-5. Get your public link!
+For hosting you can deploy the same app on any service that runs uvicorn/gunicorn (Render, Railway, Fly.io, etc.). Make sure static files in `frontend/` are shipped with the service.
 
 ## 📁 Project Structure
 
 ```
 llm-mvp/
-├── app.py                 # Main Streamlit application
-├── requirements.txt        # Python dependencies
+├── server.py            # FastAPI application and chat logic
+├── requirements.txt     # Python dependencies (FastAPI + uvicorn)
+├── frontend/
+│   ├── index.html       # Landing page + chat popup markup
+│   ├── styles.css       # Chatbase-style design system
+│   └── app.js           # Frontend logic hitting the /api endpoints
 ├── data/
-│   ├── index.json        # FAQ/Index database
-│   └── logs.json         # Conversation logs (gitignored)
-├── .streamlit/
-│   ├── config.toml       # Streamlit config
-│   └── secrets.toml.example  # Secrets template
-└── DEPLOYMENT.md         # Deployment guide
+│   ├── index.json       # FAQ/Index database
+│   └── logs.json        # (Reserved for future logging, gitignored)
+└── DEPLOYMENT.md        # Deployment checklist (update to match FastAPI stack)
 ```
 
 ## ✨ Features
 
-- Real-time chat interface
-- OpenAI GPT-4o-mini integration
-- FAQ retrieval from Index database
-- Conversation logging
-- Source attribution
-- Session state management
+- Chatbase-inspired popup UI (floating launcher, popup card, clean typography)
+- Guided menu: name capture → top-level choices → sub-options → bullet summaries
+- Curated bullet responses using `data/index.json`
+- Session reset / restart controls built into the header
+- Simple REST API you can embed anywhere (Wix, static sites, SPAs)
 
 ## 📝 Notes
 
-- The app uses Streamlit's built-in secrets management for API keys
-- If your key starts with `sk-proj-`, add your project ID as `OPENAI_PROJECT_ID` in secrets
-- Conversation logs are saved to `data/logs.json`
-- FAQ data comes from `data/index.json` (easily replaceable with Wix Data API)
+- All responses are deterministic summaries—no OpenAI key required. Swap in LLM calls inside `handle_message` if desired.
+- Sessions are stored in memory; wire up Redis or a database if you need persistence at scale.
+- The frontend expects bullet responses as HTML lists. Use `format_bot_message()` when extending the backend to keep formatting consistent.
 

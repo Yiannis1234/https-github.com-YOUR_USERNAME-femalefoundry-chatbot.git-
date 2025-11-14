@@ -1,143 +1,65 @@
-# Streamlit Cloud Deployment Guide
+# FastAPI Deployment Guide
 
-## 🚀 Quick Deploy Steps
+This project now ships a FastAPI backend plus a static HTML/CSS/JS frontend. Streamlit is no longer used. Deploying means running a single uvicorn (or gunicorn) process that serves both the API and static assets.
 
-### 1. Push to GitHub
-```bash
-# Make sure your code is in a GitHub repository
-git init
-git add .
-git commit -m "Initial Streamlit app"
-git remote add origin YOUR_GITHUB_REPO_URL
-git push -u origin main
-```
+## 🚀 Quick Deploy Steps (Render / Railway / Fly.io / etc.)
 
-### 2. Deploy to Streamlit Cloud
+1. **Push to GitHub** (or your preferred repo host):
+   ```bash
+   git add .
+   git commit -m "Female Foundry chatbot"
+   git push origin main
+   ```
 
-1. **Go to**: https://share.streamlit.io/
-2. **Sign in** with your GitHub account
-3. **Click**: "New app"
-4. **Fill in**:
-   - **Repository**: Select your GitHub repo
-   - **Branch**: `main` (or your default branch)
-   - **Main file path**: `app.py`
-   - **App URL**: Choose a custom name (e.g., `femalefoundry-chatbot`)
+2. **Create a new web service** on your hosting provider:
+   - **Runtime**: Python 3.10+
+   - **Start command**: `uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}`
+   - **Environment variables**: none required by default (add your own if you extend the backend)
+   - **Working directory**: `llm-mvp/`
 
-5. **Click**: "Deploy!"
+3. **Deploy**. The platform builds dependencies from `requirements.txt`, starts uvicorn, and serves:
+   - Frontend at `https://<your-app>/` (served from `frontend/`)
+   - API at `https://<your-app>/api/...`
 
-### 3. Add Your API Key (IMPORTANT!)
-
-**After deployment:**
-
-1. In your Streamlit Cloud dashboard, click on your app
-2. Click **"Settings"** (⚙️ icon) → **"Secrets"**
-3. Add this (replace with your actual API key):
-```toml
-OPENAI_API_KEY = "your-openai-api-key-here"
-# Optional: only needed if your key starts with sk-proj-
-OPENAI_PROJECT_ID = "proj_your_project_id"
-```
-4. Click **"Save"**
-5. Your app will automatically redeploy with the API key
-
-### 4. Get Your Public Link
-
-Once deployed, Streamlit Cloud gives you a public URL like:
-```
-https://femalefoundry-chatbot.streamlit.app
-```
-
-Share this link with anyone!
-
----
-
-## 📋 Pre-Deployment Checklist
-
-- [ ] Code is pushed to GitHub
-- [ ] `requirements.txt` exists with all dependencies
-- [ ] `app.py` is the main file
-- [ ] `data/index.json` exists (FAQ data)
-- [ ] `.gitignore` excludes sensitive files
-- [ ] API key is ready to add to Streamlit Secrets
-
----
-
-## 🧪 Test Locally First
-
-Before deploying, test locally:
+## 🧪 Local Smoke Test
 
 ```bash
-# Install dependencies
 pip install -r requirements.txt
-
-# Set up secrets (create .streamlit/secrets.toml)
-mkdir -p .streamlit
-cp .streamlit/secrets.toml.example .streamlit/secrets.toml
-# Then edit .streamlit/secrets.toml and add your API key
-
-# Run locally
-streamlit run app.py
+uvicorn server:app --reload
 ```
 
-Visit: http://localhost:8501
+Visit http://localhost:8000 to confirm the landing page and chat widget load. The widget calls:
+- `POST /api/session` when the page loads
+- `POST /api/chat` when you send messages or click quick options
+- `POST /api/session/{session_id}/reset` when you tap ↺ in the header
 
----
+## 📁 Deployment Checklist
 
-## 🔒 Security Notes
+- [ ] `server.py` (FastAPI) committed
+- [ ] `frontend/` directory committed (index.html, styles.css, app.js)
+- [ ] `requirements.txt` contains `fastapi` and `uvicorn`
+- [ ] `data/index.json` present (FAQ payload)
+- [ ] No Streamlit files needed (`.streamlit/`, `app.py` removed)
 
-- ✅ API key is stored securely in Streamlit Cloud Secrets (encrypted)
-- ✅ Never commit `.streamlit/secrets.toml` to GitHub
-- ✅ The hardcoded key in `app.py` is a fallback for local testing only
-- ⚠️ Remove the hardcoded key before production deployment
+## 🔒 Security / Extensibility Notes
 
----
+- Current build uses curated responses—no OpenAI key required. If you add an LLM call, store the key as an environment variable on your hosting provider.
+- Sessions are kept in memory. Swap `SESSIONS` with Redis or your data store if you need persistence or horizontal scaling.
+- Static files are served directly by FastAPI; for CDN caching or custom hosting, point your CDN to the `frontend/` directory and point API calls to `/api`.
 
 ## 🐛 Troubleshooting
 
-**App won't start:**
-- Check `requirements.txt` has all dependencies
-- Verify `app.py` is in the root directory
-- Check Streamlit Cloud logs for errors
+| Symptom | Fix |
+| --- | --- |
+| `404 Session not found` | Frontend lost its `session_id`. Reset the session (`↺`) or reload the page. |
+| Styles/JS not loading in production | Ensure static files are deployed; some platforms require `STATIC_DIR` config or `--root-path`. |
+| API blocked by CORS | `server.py` allows `*` origins by default. Tighten later once you know the production domain. |
 
-**API key not working:**
-- Verify it's added in Streamlit Cloud Secrets (Settings → Secrets)
-- Check the key is correct (no extra spaces)
-- App will auto-redeploy after saving secrets
+## 🔄 Updating the App
 
-**Data files missing:**
-- Ensure `data/index.json` is committed to GitHub
-- Check file paths in `app.py` match your structure
+1. Commit & push changes.
+2. Trigger redeploy on your platform (most services do this automatically).
+3. Hard refresh the browser (Cmd+Shift+R) to clear cached CSS/JS.
 
----
-
-## 📊 Features
-
-- ✅ Real-time chat interface
-- ✅ OpenAI GPT-4o-mini integration
-- ✅ FAQ retrieval from Index database
-- ✅ Conversation logging
-- ✅ Source attribution
-- ✅ Session state management
-- ✅ Responsive UI
-
----
-
-## 🔄 Updates
-
-After making changes:
-1. Push to GitHub
-2. Streamlit Cloud auto-deploys (usually takes 1-2 minutes)
-3. Your public link stays the same
-
----
-
-## 💰 Costs
-
-- **Streamlit Cloud**: Free tier available (unlimited apps)
-- **OpenAI API**: Pay-as-you-go (very cheap for GPT-4o-mini)
-- **Total**: ~$0-5/month depending on usage
-
----
-
-Need help? Check Streamlit docs: https://docs.streamlit.io/
+Happy shipping! 🛳️
 

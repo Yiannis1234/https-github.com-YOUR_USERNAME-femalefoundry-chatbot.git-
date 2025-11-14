@@ -1,71 +1,69 @@
 # Female Foundry Chatbot MVP
 
-This mini-project shows how a Wix/Velo widget could call into an LLM-backed service, fetch answers from the Female Foundry "Index" dataset, and log conversations for analysis.
-
-The stack is intentionally simple so you can demo locally, then translate the patterns into Wix HTTP functions or an external serverless setup.
+A Chatbase-inspired chatbot experience for Female Foundry. The current build uses a FastAPI backend with a static HTML/CSS/JS front-end so it can be embedded anywhere (Wix, static sites, landing pages) without Streamlit or Node runtimes.
 
 ## Features
 
-- Browser chat UI that mimics an embedded Wix widget.
-- Express backend with a `/api/chat` endpoint.
-- Lightweight retrieval against `data/index.json` to supply context.
-- Optional OpenAI integration (`gpt-4o-mini` by default). Falls back to FAQ answers when no API key is set.
-- Conversation logging to `data/logs.json` for analytics and continuous improvement.
+- Floating popup widget with a clean Chatbase-style layout.
+- Guided flow: capture visitor name → primary topics → curated sub-options → bullet summaries.
+- Responses sourced from `data/index.json` and returned as concise bullet lists.
+- REST API (`/api`) that can be consumed by other clients (Wix HTTP functions, SPAs, etc.).
+- One-command local run using uvicorn; no additional services required.
 
 ## Prerequisites
 
-- Node.js 18+
-- npm or pnpm
-- OpenAI API key (optional for live LLM responses)
+- Python 3.10+
+- pip
+- (Optional) Infrastructure to persist sessions or pipe responses into CRM tools.
 
 ## Quick Start
 
 ```bash
-cd "/Users/ioannisvamvakas/FEMALE FOUNDRY/llm-mvp"
-npm install
-cp env.example .env       # optional: add your OpenAI API key
-npm run start             # starts on http://localhost:3000
+cd "llm-mvp"
+pip install -r requirements.txt
+uvicorn server:app --reload
 ```
 
-Open `http://localhost:3000` in your browser and ask a question.
-
-If you omit an OpenAI key the server will respond with the best FAQ match and show how escalation works when no answer is found.
+Open http://localhost:8000 to view the landing page and interact with the popup chat. The widget communicates with:
+- `POST /api/session` – start/reset a session
+- `POST /api/chat` – send the user’s message and receive bot replies/options
 
 ## Project Layout
 
 ```
 llm-mvp/
+├── server.py            # FastAPI app with session handling + curated responses
+├── requirements.txt     # Python dependencies (FastAPI, uvicorn)
+├── frontend/
+│   ├── index.html       # Landing page + chat markup
+│   ├── styles.css       # Chatbase-style design system
+│   └── app.js           # Frontend logic wired to the /api endpoints
 ├── data/
-│   ├── index.json     # "Index" dataset used for retrieval
-│   └── logs.json      # Conversation logs written at runtime
-├── public/
-│   ├── index.html     # Demo widget UI
-│   ├── app.js         # Frontend chat logic
-│   └── styles.css
-├── server.js          # Express + OpenAI integration
-├── env.example        # Copy to .env and fill in secrets
-└── package.json
+│   ├── index.json       # Female Foundry knowledge base
+│   └── logs.json        # (Reserved for future logging)
+├── QUICK_START.md       # Local/dev instructions
+└── DEPLOYMENT.md        # FastAPI deployment checklist
 ```
 
 ## Extending the MVP
 
-- **Swap data source**: Replace `data/index.json` with a call to Wix Data or Airtable. Map each record to the same structure.
-- **Improve retrieval**: Add embeddings (OpenAI, Cohere) and store vectors in Supabase or Pinecone. Use cosine similarity instead of keyword counting.
-- **Production logging**: Send log entries to a managed database or analytics pipeline, and redact PII before storage.
-- **Human handover**: Trigger email or create a CRM ticket when the bot lacks confidence.
-- **Wix integration**: Migrate `server.js` logic into a Wix HTTP function or host the endpoint externally and call it via `fetch` inside a Velo component.
+- **LLM Integration**: Plug an OpenAI (or other) call inside `handle_message` in `server.py`; use `format_bot_message()` to keep bullet formatting consistent.
+- **Data Sources**: Swap `INFO_MAP` content for live data pulled from Wix Data, Airtable, or a headless CMS.
+- **Session Storage**: Replace the in-memory `SESSIONS` dict with Redis/DynamoDB if you need persistence or horizontal scaling.
+- **Analytics**: Log each exchange to a database or analytics pipeline (e.g., Segment, BigQuery) for reporting.
+- **Branding**: Adjust typography, gradients, and copy in `frontend/styles.css` and `index.html` to mirror production designs.
 
-## Demo Script for Stakeholders
+## Demo Script
 
-1. Ask “How do I join the community?” – returns membership instructions (FAQ match).
-2. Ask “What happens to my data?” – shows privacy policy snippet.
-3. Ask something unknown – bot offers human escalation, demonstrating fallback.
-4. Show `data/logs.json` to highlight audit logs and analytics potential.
+1. Provide your name (e.g., “Ioannis”) to personalise responses.
+2. Click **Female Foundry Programs** → **AI Hustle** – receive a three-bullet summary.
+3. Hit ↺ (Start over) to show the reset flow.
+4. Close the popup and reopen via the 💬 bubble to demonstrate behaviour on Wix-like pages.
 
-## Next Steps (Suggested)
+## Next Steps
 
-- Finalise MVP scope during kickoff using the checklist.
-- Confirm data/privacy expectations and retention windows.
-- Decide on hosting (Wix backend vs. external) and LLM provider based on budget and compliance.
-- Turn this prototype into a milestone plan (e.g., discovery, integration, QA, launch).
+- Validate copy and CTA destinations with stakeholders.
+- Hook the API into your preferred hosting platform (Render, Railway, Fly.io, etc.).
+- Test embed in Wix via an iframe or custom element pointing to the hosted widget.
+- Layer analytics + CRM handover if the bot escalates unanswered questions.
 

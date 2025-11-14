@@ -1,138 +1,76 @@
-# 🚀 STREAMLIT DEPLOYMENT - STEP BY STEP
+# 🚀 FASTAPI QUICK START
 
 ## ✅ What's Ready
-- ✅ Streamlit app (`app.py`)
-- ✅ Requirements file (`requirements.txt`)
-- ✅ Data files (`data/index.json`)
-- ✅ Configuration files (`.streamlit/config.toml`)
-- ✅ API key integrated (fallback in code)
+- ✅ FastAPI server (`server.py`)
+- ✅ Static frontend (`frontend/index.html`, `styles.css`, `app.js`)
+- ✅ Data payload (`data/index.json`)
+- ✅ Requirements file (`requirements.txt` with FastAPI + uvicorn)
 
 ---
 
-## 📋 DEPLOYMENT STEPS
-
-### Step 1: Test Locally (Optional but Recommended)
+## 📋 RUN LOCALLY
 
 ```bash
-cd "/Users/ioannisvamvakas/FEMALE FOUNDRY/llm-mvp"
+cd "llm-mvp"
 
-# Install Python dependencies
-pip3 install streamlit openai
+# Install dependencies
+pip install -r requirements.txt
 
-# Run the app
-streamlit run app.py
+# Start the app (serves API + frontend)
+uvicorn server:app --reload
 ```
 
-Open: http://localhost:8501
+Visit: http://localhost:8000
+
+You should see the landing page with the floating chat popup. The API lives under `/api` (e.g. `POST /api/chat`).
 
 ---
 
-### Step 2: Push to GitHub
+## ☁️ DEPLOY IN 3 STEPS
 
-```bash
-# Initialize git (if not already done)
-git init
+1. **Push to GitHub**
+   ```bash
+   git add .
+   git commit -m "Female Foundry FastAPI chatbot"
+   git push origin main
+   ```
 
-# Add all files
-git add .
+2. **Create a web service** (Render, Railway, Fly.io, etc.)
+   - Runtime: Python 3.10+
+   - Start command: `uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}`
+   - Working directory: `llm-mvp/`
+   - Environment variables: none required (add your own if extending the backend)
 
-# Commit
-git commit -m "Streamlit chatbot MVP"
-
-# Create a new repo on GitHub.com, then:
-git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-git branch -M main
-git push -u origin main
-```
-
-**Important**: Make sure `.streamlit/secrets.toml` is NOT committed (it's in `.gitignore`)
+3. **Deploy** and share the generated URL (frontend and API are served from the same app).
 
 ---
 
-### Step 3: Deploy to Streamlit Cloud
+## 🔍 TROUBLESHOOTING
 
-1. **Go to**: https://share.streamlit.io/
-2. **Sign in** with GitHub
-3. **Click**: "New app"
-4. **Fill in**:
-   - **Repository**: `YOUR_USERNAME/YOUR_REPO_NAME`
-   - **Branch**: `main`
-   - **Main file path**: `app.py`
-   - **App URL**: `femalefoundry-chatbot` (or your choice)
-5. **Click**: "Deploy!"
+| Issue | Fix |
+| --- | --- |
+| 404 on `/api/chat` | Ensure the server is running at the same origin; avoid proxies stripping `/api`. |
+| CSS/JS not updating | Hard refresh (Cmd+Shift+R) or clear cache after redeploy. |
+| "Session not found" | The chat lost its `session_id`. Click ↺ (Start over) or reload the page. |
+| CORS errors | Adjust the `CORSMiddleware` config in `server.py` if you deploy frontend elsewhere. |
 
 ---
 
-### Step 4: Add API Key (CRITICAL!)
+## 📁 FILES YOU NEED
 
-**After deployment:**
-
-1. In Streamlit Cloud dashboard → Click your app
-2. Click **⚙️ Settings** → **Secrets**
-3. Paste this in the secrets editor:
-
-```toml
-OPENAI_API_KEY = "your-openai-api-key-here"
-# Optional: only needed if your key starts with sk-proj-
-OPENAI_PROJECT_ID = "proj_your_project_id"
-```
-
-4. Click **"Save"**
-5. App auto-redeploys (takes ~30 seconds)
+- ✅ `server.py`
+- ✅ `frontend/index.html`, `frontend/styles.css`, `frontend/app.js`
+- ✅ `requirements.txt`
+- ✅ `data/index.json`
+- ✅ `.gitignore` (optional but recommended)
 
 ---
 
-### Step 5: Get Your Public Link! 🎉
+## 🎯 NEXT STEPS
 
-Your app will be live at:
-```
-https://femalefoundry-chatbot.streamlit.app
-```
+- Tailor copy/branding in the landing page (`frontend/index.html`).
+- Add analytics/logging via the backend session store.
+- Integrate an actual LLM call inside `handle_message` if you want dynamic answers.
 
-(Or whatever URL you chose)
-
----
-
-## 🔍 Troubleshooting
-
-**App won't start?**
-- Check Streamlit Cloud logs (click "Manage app" → "Logs")
-- Verify `requirements.txt` has `streamlit` and `openai`
-- Make sure `app.py` is in the root directory
-
-**API key not working?**
-- Double-check it's saved in Streamlit Secrets
-- Wait for app to redeploy after saving secrets
-- Check logs for API errors
-
-**Data files missing?**
-- Ensure `data/index.json` is committed to GitHub
-- Check file paths match your repo structure
-
----
-
-## 📁 Files You Need
-
-Make sure these are in your GitHub repo:
-- ✅ `app.py` (main app)
-- ✅ `requirements.txt` (dependencies)
-- ✅ `data/index.json` (FAQ data)
-- ✅ `.streamlit/config.toml` (config)
-- ✅ `.gitignore` (excludes secrets)
-
----
-
-## 🎯 That's It!
-
-Once deployed, you'll have:
-- ✅ Public URL (shareable)
-- ✅ Fast hosting (Streamlit Cloud)
-- ✅ Secure API key storage
-- ✅ Auto-deploys on git push
-
-**Your API key is safe** - it's stored encrypted in Streamlit Cloud Secrets, not in your code!
-
----
-
-Need help? Check `DEPLOYMENT.md` for more details.
+Happy building! 💬
 
