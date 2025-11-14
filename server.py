@@ -126,18 +126,18 @@ def format_bot_message(text: str) -> str:
 class SessionState:
     def __init__(self, session_id: str):
         self.session_id = session_id
-        self.stage = "menu_primary"
+        self.stage = "ask_name"
         self.visitor_name: str | None = None
         self.primary_choice: str | None = None
         self.history: List[Tuple[str, str]] = []
-        opening = format_bot_message("Welcome! Choose a Female Foundry topic to explore or ask me a question.")
+        opening = format_bot_message("Hi! I’m the Female Foundry assistant. What’s your name?")
         self.history.append(("bot", opening))
 
     def to_initial_response(self) -> SessionResponse:
         return SessionResponse(
             session_id=self.session_id,
             messages=[{"role": role, "content": content} for role, content in [self.history[-1]]],
-            options=PRIMARY_OPTIONS,
+            options=[],
             stage=self.stage,
         )
 
@@ -186,18 +186,28 @@ def reset_session(state: SessionState) -> SessionResponse:
 def handle_message(state: SessionState, message: str) -> SessionResponse:
     trimmed = message.strip()
     if not trimmed:
-        return respond(state, [format_bot_message("Start by choosing one of the quick options or type a question.")], _current_options(state))
+        return respond(state, [format_bot_message("Say something or choose one of the suggestions below.")], _current_options(state))
 
     if trimmed.lower() in {"reset", "start over"}:
         return reset_session(state)
 
     state.history.append(("user", trimmed))
 
+    if state.stage == "ask_name":
+        if not trimmed:
+            return respond(state, [format_bot_message("Let’s start with your name—just type it in.")], [])
+        state.visitor_name = trimmed.title()
+        state.stage = "menu_primary"
+        responses = [
+            format_bot_message(f"Nice to meet you, {state.visitor_name}! Choose what you’d like to explore:"),
+        ]
+        return respond(state, responses, PRIMARY_OPTIONS)
+
     if state.stage == "menu_primary":
         match = match_option(trimmed, PRIMARY_OPTIONS)
         if not match:
             fallback = format_bot_message(
-                "Pick one of the quick options below or ask something like ‘Female founders headline stats’ or ‘Tell me about AI Hustle’."
+                "Pick one of the quick options below, or ask something specific like ‘Female founders headline stats’ or ‘Tell me about AI Hustle’."
             )
             return respond(state, [fallback], PRIMARY_OPTIONS)
         state.primary_choice = match
@@ -227,7 +237,6 @@ def handle_message(state: SessionState, message: str) -> SessionResponse:
         ]
         return respond(state, responses, PRIMARY_OPTIONS)
 
-    # Fallback for unexpected states
     state.stage = "menu_primary"
     fallback = format_bot_message("Let's continue—pick a topic below or reset the chat (↺).")
     return respond(state, [fallback], PRIMARY_OPTIONS)

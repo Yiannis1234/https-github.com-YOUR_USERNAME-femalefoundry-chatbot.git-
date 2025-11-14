@@ -12,6 +12,14 @@ const closeBtn = document.getElementById("chatClose");
 let sessionId = null;
 let isSending = false;
 
+function updatePlaceholder(stage) {
+  if (stage === "ask_name") {
+    inputEl.placeholder = "Type your name…";
+  } else {
+    inputEl.placeholder = "Ask about programs, stats, etc.";
+  }
+}
+
 async function createSession() {
   const res = await fetch(`${API_BASE}/session`, { method: "POST" });
   if (!res.ok) throw new Error("Failed to create session");
@@ -20,8 +28,8 @@ async function createSession() {
   clearMessages();
   appendMessages(data.messages || []);
   renderOptions(data.options || []);
+  updatePlaceholder(data.stage);
   openChat();
-  inputEl.placeholder = "Ask about programs, stats, etc.";
   inputEl.focus();
 }
 
@@ -35,6 +43,7 @@ async function resetSession() {
   clearMessages();
   appendMessages(data.messages || []);
   renderOptions(data.options || []);
+  updatePlaceholder(data.stage);
   inputEl.focus();
 }
 
@@ -59,6 +68,7 @@ async function sendMessage(text) {
     const data = await res.json();
     appendMessages(data.messages || []);
     renderOptions(data.options || []);
+    updatePlaceholder(data.stage);
   } catch (err) {
     console.error(err);
     addMessage("bot", "Something went wrong. Try again in a moment.");
